@@ -1,26 +1,68 @@
 """
 Azure Data Lake Storage Utility
 
-Authentication Priority
------------------------
-1. Azure CLI (az login)
-2. Managed Identity (Databricks)
-3. Service Principal (future)
+Supports
 
-No code changes are required between local and Databricks.
+1. Interactive Browser
+2. Azure CLI
+3. Managed Identity
+
+No code changes required between environments.
 """
 
 from pathlib import Path
+import io
 
-from azure.identity import DefaultAzureCredential
-from azure.storage.filedatalake import DataLakeServiceClient
+from azure.identity import (
+    InteractiveBrowserCredential,
+    AzureCliCredential,
+    DefaultAzureCredential,
+)
+
+from azure.storage.filedatalake import (
+    DataLakeServiceClient,
+)
 
 from generators.common.config import (
     AZURE_STORAGE_ACCOUNT,
-    AZURE_CONTAINER
+    AZURE_CONTAINER,
+    AUTH_MODE,
 )
 
 from generators.common.logger import logger
+
+
+def get_credential():
+
+    if AUTH_MODE.lower() == "browser":
+
+        logger.info(
+            "Using InteractiveBrowserCredential"
+        )
+
+        return InteractiveBrowserCredential()
+
+    elif AUTH_MODE.lower() == "azure_cli":
+
+        logger.info(
+            "Using AzureCliCredential"
+        )
+
+        return AzureCliCredential()
+
+    elif AUTH_MODE.lower() == "managed_identity":
+
+        logger.info(
+            "Using DefaultAzureCredential"
+        )
+
+        return DefaultAzureCredential()
+
+    else:
+
+        raise ValueError(
+            f"Unsupported auth mode : {AUTH_MODE}"
+        )
 
 
 class ADLSStorage:
@@ -28,48 +70,49 @@ class ADLSStorage:
     def __init__(self):
 
         self.account_name = AZURE_STORAGE_ACCOUNT
+
         self.container_name = AZURE_CONTAINER
 
-        self.credential = DefaultAzureCredential()
+        self.credential = get_credential()
 
         self.service_client = DataLakeServiceClient(
-            account_url=f"https://{self.account_name}.dfs.core.windows.net",
+
+            account_url=(
+                f"https://"
+                f"{self.account_name}"
+                f".dfs.core.windows.net"
+            ),
+
             credential=self.credential
+
         )
 
-        self.file_system = self.service_client.get_file_system_client(
-            self.container_name
+        self.file_system = (
+            self.service_client.get_file_system_client(
+                self.container_name
+            )
         )
 
         logger.info(
-            f"Connected to ADLS Container: {self.container_name}"
+            f"Connected to ADLS container : "
+            f"{self.container_name}"
         )
 
-    #####################################################################
+    ##########################################################
 
-    def create_directory(self, directory: str):
+    def create_directory(self, directory):
 
         try:
 
             self.file_system.create_directory(directory)
 
-            logger.info(
-                f"Directory created: {directory}"
-            )
-
         except Exception:
 
-            logger.debug(
-                f"Directory already exists: {directory}"
-            )
+            pass
 
-    #####################################################################
+    ##########################################################
 
-    def upload(
-        self,
-        local_file: str,
-        remote_path: str
-    ):
+    def upload(self, local_file, remote_path):
 
         local_file = Path(local_file)
 
@@ -89,17 +132,50 @@ class ADLSStorage:
             )
 
         logger.info(
-            f"Uploaded: {local_file.name} -> {remote_path}"
+            f"Uploaded {local_file.name}"
         )
 
         return remote_path
 
-    #####################################################################
+    ##########################################################
+
+    def upload_dataframe(
+        self,
+        dataframe,
+        remote_path
+    ):
+
+        csv_buffer = io.StringIO()
+
+        dataframe.to_csv(
+            csv_buffer,
+            index=False
+        )
+
+        self.create_directory(
+            str(Path(remote_path).parent)
+        )
+
+        file_client = self.file_system.get_file_client(
+            remote_path
+        )
+
+        file_client.upload_data(
+            csv_buffer.getvalue(),
+            overwrite=True
+        )
+
+        logger.info(
+            f"Uploaded dataframe -> "
+            f"{remote_path}"
+        )
+
+    ##########################################################
 
     def download(
         self,
-        remote_path: str,
-        local_file: str
+        remote_path,
+        local_file
     ):
 
         file_client = self.file_system.get_file_client(
@@ -115,18 +191,21 @@ class ADLSStorage:
 
         with open(local_file, "wb") as file:
 
-            file.write(download.readall())
+            file.write(
+                download.readall()
+            )
 
-        logger.info(
-            f"Downloaded: {remote_path}"
+    ##########################################################
+
+    def delete(self, remote_path):
+
+        self.file_system.delete_file(
+            remote_path
         )
 
-    #####################################################################
+    ##########################################################
 
-    def exists(
-        self,
-        remote_path: str
-    ) -> bool:
+    def exists(self, remote_path):
 
         try:
 
@@ -140,64 +219,15 @@ class ADLSStorage:
 
             return False
 
-    #####################################################################
+    ##########################################################
 
-    def delete(
-        self,
-        remote_path: str
-    ):
-
-        self.file_system.delete_file(
-            remote_path
-        )
-
-        logger.info(
-            f"Deleted: {remote_path}"
-        )
-
-    #####################################################################
-
-    def list_files(
-        self,
-        directory: str = ""
-    ):
+    def list_files(self, directory=""):
 
         paths = self.file_system.get_paths(
             path=directory
         )
 
-        return [path.name for path in paths]
-
-    #####################################################################
-
-    def upload_dataframe(
-        self,
-        dataframe,
-        remote_path: str
-    ):
-        """
-        Upload dataframe directly without writing locally.
-        Mainly useful for future Databricks jobs.
-        """
-
-        import io
-
-        csv_buffer = io.StringIO()
-
-        dataframe.to_csv(
-            csv_buffer,
-            index=False
-        )
-
-        file_client = self.file_system.get_file_client(
-            remote_path
-        )
-
-        file_client.upload_data(
-            csv_buffer.getvalue(),
-            overwrite=True
-        )
-
-        logger.info(
-            f"Uploaded dataframe -> {remote_path}"
-        )
+        return [
+            path.name
+            for path in paths
+        ]
