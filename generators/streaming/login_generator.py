@@ -40,27 +40,36 @@ class LoginGenerator:
     def generate_ip():
 
         return ".".join(
+
             str(random.randint(1, 255))
+
             for _ in range(4)
+
         )
 
     ###############################################################
 
     @staticmethod
     def calculate_risk(
+
         status,
+
         failed_count,
+
         new_device
+
     ):
 
         score = 0
 
         if status == "FAILED":
+
             score += 40
 
         score += failed_count * 10
 
         if new_device:
+
             score += 20
 
         return min(score, 100)
@@ -73,58 +82,54 @@ class LoginGenerator:
 
         customers = self.context.customer_df
 
-        if customers.empty:
-
-            raise ValueError(
-                "Customer data is empty. Run CustomerGenerator before LoginGenerator."
-            )
-
         streaming = SIMULATION["streaming"]
 
-        batch_size = streaming["login_batch_size"]
+        batch_size = min(
 
-        failed_probability = streaming["failed_login_probability"]
+            streaming["login_batch_size"],
 
-        new_device_probability = streaming.get(
-            "new_device_probability",
-            0.15
+            len(customers)
+
         )
 
-        sample_size = min(
-            len(customers),
-            batch_size
-        )
-
-        sampled = customers.sample(sample_size)
+        sampled = customers.sample(batch_size)
 
         for _, customer in sampled.iterrows():
 
-            status = random.choices(
+            failed = (
 
-                [
-                    "SUCCESS",
-                    "FAILED"
-                ],
+                random.random()
 
-                weights=[
-                    1 - failed_probability,
-                    failed_probability
-                ]
+                < streaming["failed_login_probability"]
 
-            )[0]
+            )
 
-            failed_count = 0
+            status = (
 
-            if status == "FAILED":
+                "FAILED"
 
-                failed_count = random.randint(
-                    1,
-                    5
-                )
+                if failed
+
+                else "SUCCESS"
+
+            )
+
+            failed_count = (
+
+                random.randint(1, 5)
+
+                if failed
+
+                else 0
+
+            )
 
             new_device = (
+
                 random.random()
-                < new_device_probability
+
+                < streaming["new_device_probability"]
+
             )
 
             risk_score = self.calculate_risk(
@@ -139,31 +144,57 @@ class LoginGenerator:
 
             rows.append({
 
-                "login_id": login_id(),
+                "login_id":
 
-                "customer_id": customer.customer_id,
+                    login_id(),
 
-                "device": random.choice(
-                    DEVICES
-                ),
+                "customer_id":
 
-                "browser": random.choice(
-                    BROWSERS
-                ),
+                    customer.customer_id,
 
-                "ip_address": self.generate_ip(),
+                "device":
 
-                "city": customer.city,
+                    random.choice(
 
-                "status": status,
+                        DEVICES
 
-                "failed_login_count": failed_count,
+                    ),
 
-                "new_device": new_device,
+                "browser":
 
-                "risk_score": risk_score,
+                    random.choice(
 
-                "login_timestamp": datetime.now()
+                        BROWSERS
+
+                    ),
+
+                "ip_address":
+
+                    self.generate_ip(),
+
+                "city":
+
+                    customer.city,
+
+                "status":
+
+                    status,
+
+                "failed_login_count":
+
+                    failed_count,
+
+                "new_device":
+
+                    new_device,
+
+                "risk_score":
+
+                    risk_score,
+
+                "login_timestamp":
+
+                    datetime.now()
 
             })
 

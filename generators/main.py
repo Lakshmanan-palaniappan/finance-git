@@ -1,34 +1,42 @@
 """
+Enterprise Banking Simulator
+
 Application Entry Point
 """
 
-from generators.simulator import BankingSimulator
 from generators.common.logger import logger
+from generators.simulator import BankingSimulator
 
 
 def main():
 
+    logger.info("=" * 80)
+
     logger.info(
-        "Starting Enterprise Banking Data Simulator..."
+        "Enterprise Banking Data Simulator"
     )
 
-    try:
+    logger.info("=" * 80)
 
-        simulator = BankingSimulator()
+    simulator = BankingSimulator()
+
+    try:
 
         simulator.start()
 
     except KeyboardInterrupt:
 
         logger.info(
-            "Application stopped by user."
+            "Simulator stopped by user."
         )
 
-    except Exception:
+    except Exception as ex:
 
         logger.exception(
-            "Application terminated due to an unexpected error."
+            f"Simulator failed: {ex}"
         )
+
+        raise
 
 
 if __name__ == "__main__":

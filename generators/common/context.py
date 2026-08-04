@@ -1,9 +1,7 @@
 """
 Generation Context
 
-Shared runtime context across the banking simulator.
-
-All generators read from and write to this object.
+Shared state across all generators.
 """
 
 from dataclasses import dataclass, field
@@ -14,76 +12,102 @@ import pandas as pd
 @dataclass
 class GenerationContext:
 
-    # ==========================================================
+    ###############################################################
     # Master Data
-    # ==========================================================
+    ###############################################################
 
-    branch_df: pd.DataFrame = field(default_factory=pd.DataFrame)
+    branch_df: pd.DataFrame = field(
+        default_factory=pd.DataFrame
+    )
 
-    customer_df: pd.DataFrame = field(default_factory=pd.DataFrame)
+    customer_df: pd.DataFrame = field(
+        default_factory=pd.DataFrame
+    )
 
-    account_df: pd.DataFrame = field(default_factory=pd.DataFrame)
+    account_df: pd.DataFrame = field(
+        default_factory=pd.DataFrame
+    )
 
-    card_df: pd.DataFrame = field(default_factory=pd.DataFrame)
+    card_df: pd.DataFrame = field(
+        default_factory=pd.DataFrame
+    )
 
-    loan_df: pd.DataFrame = field(default_factory=pd.DataFrame)
+    loan_df: pd.DataFrame = field(
+        default_factory=pd.DataFrame
+    )
 
-    customer_kyc_df: pd.DataFrame = field(default_factory=pd.DataFrame)
+    customer_kyc_df: pd.DataFrame = field(
+        default_factory=pd.DataFrame
+    )
 
-    exchange_rate_df: pd.DataFrame = field(default_factory=pd.DataFrame)
+    exchange_rate_df: pd.DataFrame = field(
+        default_factory=pd.DataFrame
+    )
 
-    # ==========================================================
-    # Runtime Lookups
-    # ==========================================================
+    ###############################################################
+    # Streaming
+    ###############################################################
 
-    branch_lookup: dict = field(default_factory=dict)
+    transaction_df: pd.DataFrame = field(
+        default_factory=pd.DataFrame
+    )
 
-    customer_lookup: dict = field(default_factory=dict)
+    atm_transaction_df: pd.DataFrame = field(
+        default_factory=pd.DataFrame
+    )
 
-    account_lookup: dict = field(default_factory=dict)
+    login_activity_df: pd.DataFrame = field(
+        default_factory=pd.DataFrame
+    )
 
-    card_lookup: dict = field(default_factory=dict)
+    ###############################################################
+    # CDC
+    ###############################################################
 
-    loan_lookup: dict = field(default_factory=dict)
+    account_cdc_df: pd.DataFrame = field(
+        default_factory=pd.DataFrame
+    )
 
-    # ==========================================================
-    # Runtime Metadata
-    # ==========================================================
+    customer_cdc_df: pd.DataFrame = field(
+        default_factory=pd.DataFrame
+    )
 
-    metadata: dict = field(default_factory=dict)
+    card_cdc_df: pd.DataFrame = field(
+        default_factory=pd.DataFrame
+    )
 
-    # ==========================================================
-    # Helper Methods
-    # ==========================================================
+    loan_cdc_df: pd.DataFrame = field(
+        default_factory=pd.DataFrame
+    )
 
-    def reset(self):
+    ###############################################################
+    # Batch Metadata
+    ###############################################################
 
-        """
-        Clears all runtime objects.
-        """
+    current_batch_id: str = ""
 
-        self.branch_df = pd.DataFrame()
+    ###############################################################
+    # Streaming Cleanup
+    ###############################################################
 
-        self.customer_df = pd.DataFrame()
+    def clear_streaming(self):
 
-        self.account_df = pd.DataFrame()
+        self.transaction_df = pd.DataFrame()
 
-        self.card_df = pd.DataFrame()
+        self.atm_transaction_df = pd.DataFrame()
 
-        self.loan_df = pd.DataFrame()
+        self.login_activity_df = pd.DataFrame()
 
-        self.customer_kyc_df = pd.DataFrame()
+    ###############################################################
+    # CDC Cleanup
+    ###############################################################
 
-        self.exchange_rate_df = pd.DataFrame()
+    def clear_cdc(self):
 
-        self.branch_lookup.clear()
+        self.account_cdc_df = pd.DataFrame()
 
-        self.customer_lookup.clear()
+        self.customer_cdc_df = pd.DataFrame()
 
-        self.account_lookup.clear()
+        self.card_cdc_df = pd.DataFrame()
 
-        self.card_lookup.clear()
-
-        self.loan_lookup.clear()
-
-        self.metadata.clear()
+        self.loan_cdc_df = pd.DataFrame()

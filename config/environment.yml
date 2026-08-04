@@ -24,6 +24,12 @@ paths:
 
   landing: landing
 
+  master: master
+
+  cdc: cdc
+
+  streaming: streaming
+
   bronze: bronze
 
   silver: silver
@@ -44,9 +50,9 @@ simulation:
 
   master:
 
-    branches: 25
+    branches: 5
 
-    customers: 500
+    customers: 20
 
     customer_income:
 
@@ -72,23 +78,25 @@ simulation:
 
       interest_rate:
 
-        minimum: 7.50
+        minimum: 7.5
 
-        maximum: 12.50
+        maximum: 12.5
 
   streaming:
 
-    transaction_interval: 300
+    cycle_interval: 30
 
-    atm_interval: 300
+    transaction_batch_size: 10
 
-    login_interval: 60
+    atm_batch_size: 5
 
-    transaction_batch_size: 500
+    login_batch_size: 5
 
-    atm_batch_size: 200
+    customer_events: 3
 
-    login_batch_size: 300
+    card_events: 2
+
+    loan_events: 2
 
     fraud_probability: 0.02
 
@@ -106,21 +114,11 @@ simulation:
 
       maximum_amount: 20000
 
-  exchange_rates:
-
-    refresh_days: 1
-
-monitoring:
-
-  metrics_folder: monitoring
-
-  audit_folder: audit
-
-  retain_days: 30
-
 datasets:
 
   branches:
+
+    type: master
 
     folder: branches
 
@@ -128,9 +126,9 @@ datasets:
 
     format: csv
 
-    compression: none
-
   customers:
+
+    type: master
 
     folder: customers
 
@@ -138,9 +136,9 @@ datasets:
 
     format: csv
 
-    compression: none
-
   accounts:
+
+    type: master
 
     folder: accounts
 
@@ -148,9 +146,9 @@ datasets:
 
     format: csv
 
-    compression: none
-
   cards:
+
+    type: master
 
     folder: cards
 
@@ -158,9 +156,9 @@ datasets:
 
     format: csv
 
-    compression: none
-
   loans:
+
+    type: master
 
     folder: loans
 
@@ -168,9 +166,9 @@ datasets:
 
     format: csv
 
-    compression: none
-
   customer_kyc:
+
+    type: master
 
     folder: customer_kyc
 
@@ -178,9 +176,9 @@ datasets:
 
     format: csv
 
-    compression: none
-
   exchange_rates:
+
+    type: master
 
     folder: exchange_rates
 
@@ -188,9 +186,9 @@ datasets:
 
     format: csv
 
-    compression: none
-
   transactions:
+
+    type: streaming
 
     folder: transactions
 
@@ -198,9 +196,9 @@ datasets:
 
     format: csv
 
-    compression: none
-
   atm_transactions:
+
+    type: streaming
 
     folder: atm_transactions
 
@@ -208,9 +206,9 @@ datasets:
 
     format: csv
 
-    compression: none
-
   login_activity:
+
+    type: streaming
 
     folder: login_activity
 
@@ -218,20 +216,56 @@ datasets:
 
     format: csv
 
-    compression: none
+  account_cdc:
+
+    type: cdc
+
+    folder: account_cdc
+
+    filename_prefix: account_cdc
+
+    format: csv
+
+  customer_cdc:
+
+    type: cdc
+
+    folder: customer_cdc
+
+    filename_prefix: customer_cdc
+
+    format: csv
+
+  card_cdc:
+
+    type: cdc
+
+    folder: card_cdc
+
+    filename_prefix: card_cdc
+
+    format: csv
+
+  loan_cdc:
+
+    type: cdc
+
+    folder: loan_cdc
+
+    filename_prefix: loan_cdc
+
+    format: csv
 
 settings:
 
-  timezone: Asia/Kolkata
-
-  timestamp_format: "%Y-%m-%d %H:%M:%S"
-
-  output_format: csv
-
-  overwrite_existing_files: true
+  overwrite_existing_files: false
 
   upload_to_adls: true
 
   save_local_copy: true
+
+  output_format: csv
+
+  timezone: Asia/Kolkata
 
   log_level: INFO

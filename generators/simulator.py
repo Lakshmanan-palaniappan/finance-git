@@ -3,6 +3,8 @@ Enterprise Banking Simulator
 """
 
 import time
+from uuid import uuid4
+
 import schedule
 
 from generators.common.context import GenerationContext
@@ -10,15 +12,32 @@ from generators.common.publish import Publisher
 from generators.common.logger import logger
 from generators.common.config import SIMULATION
 
+# Master
 from generators.master.branch_generator import BranchGenerator
 from generators.master.customer_generator import CustomerGenerator
 from generators.master.account_generator import AccountGenerator
 from generators.master.card_generator import CardGenerator
 from generators.master.loan_generator import LoanGenerator
 from generators.master.kyc_generator import KYCGenerator
-from generators.master.exchange_rate_generator import ExchangeRateGenerator
+from generators.master.exchange_rate_generator import (
+    ExchangeRateGenerator
+)
 
-from generators.streaming.transaction_generator import TransactionGenerator
+# Events
+from generators.events.customer_event_generator import (
+    CustomerEventGenerator
+)
+from generators.events.card_event_generator import (
+    CardEventGenerator
+)
+from generators.events.loan_event_generator import (
+    LoanEventGenerator
+)
+
+# Streaming
+from generators.streaming.transaction_generator import (
+    TransactionGenerator
+)
 from generators.streaming.atm_generator import ATMGenerator
 from generators.streaming.login_generator import LoginGenerator
 
@@ -39,21 +58,9 @@ class BankingSimulator:
         dataframe
     ):
 
-        if dataframe.empty:
-
-            logger.warning(
-                f"{dataset_name} generated no records."
-            )
-
-            return
-
-        logger.info(
-            f"Publishing {dataset_name}"
-        )
-
         self.publisher.publish(
-            dataframe,
-            dataset_name
+            dataframe=dataframe,
+            dataset_name=dataset_name
         )
 
     ###############################################################
@@ -105,20 +112,15 @@ class BankingSimulator:
 
         for dataset_name, generator in datasets:
 
-            try:
+            dataframe = generator.generate()
 
-                dataframe = generator.generate()
+            self.publish_dataset(
 
-                self.publish_dataset(
-                    dataset_name,
-                    dataframe
-                )
+                dataset_name,
 
-            except Exception:
+                dataframe
 
-                logger.exception(
-                    f"Failed generating {dataset_name}"
-                )
+            )
 
         logger.info(
             "Master Data Generation Completed."
@@ -126,78 +128,203 @@ class BankingSimulator:
 
     ###############################################################
 
-    def transaction_job(self):
+    def generate_events(self):
 
-        try:
+        CustomerEventGenerator(
+            self.context
+        ).generate()
 
-            logger.info(
-                "Generating Transactions..."
-            )
+        CardEventGenerator(
+            self.context
+        ).generate()
 
-            dataframe = TransactionGenerator(
-                self.context
-            ).generate()
-
-            self.publish_dataset(
-                "transactions",
-                dataframe
-            )
-
-        except Exception:
-
-            logger.exception(
-                "Transaction generation failed."
-            )
+        LoanEventGenerator(
+            self.context
+        ).generate()
 
     ###############################################################
 
-    def atm_job(self):
+    def generate_streaming(self):
 
-        try:
+        transaction_df = TransactionGenerator(
 
-            logger.info(
-                "Generating ATM Transactions..."
-            )
+            self.context
 
-            dataframe = ATMGenerator(
-                self.context
-            ).generate()
+        ).generate()
 
-            self.publish_dataset(
-                "atm_transactions",
-                dataframe
-            )
+        atm_df = ATMGenerator(
 
-        except Exception:
+            self.context
 
-            logger.exception(
-                "ATM transaction generation failed."
-            )
+        ).generate()
+
+        login_df = LoginGenerator(
+
+            self.context
+
+        ).generate()
+
+        return (
+
+            transaction_df,
+
+            atm_df,
+
+            login_df
+
+        )
 
     ###############################################################
 
-    def login_job(self):
+    def publish_streaming(self):
 
-        try:
+        self.publish_dataset(
 
-            logger.info(
-                "Generating Login Activity..."
-            )
+            "transactions",
 
-            dataframe = LoginGenerator(
-                self.context
-            ).generate()
+            self.context.transaction_df
 
-            self.publish_dataset(
-                "login_activity",
-                dataframe
-            )
+        )
 
-        except Exception:
+        self.publish_dataset(
 
-            logger.exception(
-                "Login activity generation failed."
-            )
+            "atm_transactions",
+
+            self.context.atm_transaction_df
+
+        )
+
+        self.publish_dataset(
+
+            "login_activity",
+
+            self.context.login_activity_df
+
+        )
+
+    ###############################################################
+
+    def publish_cdc(self):
+
+        self.publish_dataset(
+
+            "account_cdc",
+
+            self.context.account_cdc_df
+
+        )
+
+        self.publish_dataset(
+
+            "customer_cdc",
+
+            self.context.customer_cdc_df
+
+        )
+
+        self.publish_dataset(
+
+            "card_cdc",
+
+            self.context.card_cdc_df
+
+        )
+
+        self.publish_dataset(
+
+            "loan_cdc",
+
+            self.context.loan_cdc_df
+
+        )
+
+    ###############################################################
+
+    def business_cycle(self):
+
+        logger.info(
+
+            "=" * 70
+
+        )
+
+        logger.info(
+
+            "Starting Business Cycle"
+
+        )
+
+        ###########################################################
+        # New Batch
+        ###########################################################
+
+        self.context.current_batch_id = str(
+
+            uuid4()
+
+        )
+
+        ###########################################################
+        # Business Events
+        ###########################################################
+
+        self.generate_events()
+
+        ###########################################################
+        # Streaming
+        ###########################################################
+
+        transaction_df, atm_df, login_df = (
+
+            self.generate_streaming()
+
+        )
+
+        ###########################################################
+        # Publish
+        ###########################################################
+
+        self.publish_streaming()
+
+        self.publish_cdc()
+
+        ###########################################################
+        # Summary
+        ###########################################################
+
+        logger.info(
+
+            f"""
+
+Business Cycle Completed
+
+Batch ID : {self.context.current_batch_id}
+
+Transactions : {len(transaction_df)}
+
+ATM Transactions : {len(atm_df)}
+
+Login Activity : {len(login_df)}
+
+Account CDC : {len(self.context.account_cdc_df)}
+
+Customer CDC : {len(self.context.customer_cdc_df)}
+
+Card CDC : {len(self.context.card_cdc_df)}
+
+Loan CDC : {len(self.context.loan_cdc_df)}
+
+"""
+
+        )
+
+        ###########################################################
+        # Cleanup
+        ###########################################################
+
+        self.context.clear_streaming()
+
+        self.context.clear_cdc()
 
     ###############################################################
 
@@ -205,40 +332,32 @@ class BankingSimulator:
 
         self.load_master_data()
 
-        stream = SIMULATION["streaming"]
+        interval = SIMULATION["streaming"][
+
+            "cycle_interval"
+
+        ]
 
         schedule.every(
-            stream["transaction_interval"]
-        ).seconds.do(
-            self.transaction_job
-        )
 
-        schedule.every(
-            stream["atm_interval"]
-        ).seconds.do(
-            self.atm_job
-        )
+            interval
 
-        schedule.every(
-            stream["login_interval"]
         ).seconds.do(
-            self.login_job
+
+            self.business_cycle
+
         )
 
         logger.info(
-            "Enterprise Banking Simulator Started."
+
+            f"Business Cycle every {interval} seconds."
+
         )
 
-        try:
+        self.business_cycle()
 
-            while True:
+        while True:
 
-                schedule.run_pending()
+            schedule.run_pending()
 
-                time.sleep(1)
-
-        except KeyboardInterrupt:
-
-            logger.info(
-                "Simulator stopped by user."
-            )
+            time.sleep(1)

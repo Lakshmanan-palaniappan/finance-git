@@ -8,6 +8,7 @@ from datetime import datetime
 import pandas as pd
 
 from generators.common.context import GenerationContext
+from generators.common.account_service import AccountService
 from generators.common.config import SIMULATION
 from generators.common.id_generator import atm_transaction_id
 
@@ -18,12 +19,14 @@ class ATMGenerator:
 
         self.context = context
 
+        self.account_service = AccountService(context)
+
     ###############################################################
 
     @staticmethod
     def generate_atm_id():
 
-        return f"ATM{random.randint(10000, 99999)}"
+        return f"ATM{random.randint(10000,99999)}"
 
     ###############################################################
 
@@ -31,21 +34,7 @@ class ATMGenerator:
 
         rows = []
 
-        account_df = self.context.account_df
-
         card_df = self.context.card_df
-
-        if account_df.empty:
-
-            raise ValueError(
-                "Account data is empty. Run AccountGenerator before ATMGenerator."
-            )
-
-        if card_df.empty:
-
-            raise ValueError(
-                "Card data is empty. Run CardGenerator before ATMGenerator."
-            )
 
         debit_cards = card_df[
             card_df.card_type == "Debit"
@@ -53,93 +42,103 @@ class ATMGenerator:
 
         if debit_cards.empty:
 
-            return pd.DataFrame()
+            dataframe = pd.DataFrame()
+
+            self.context.atm_transaction_df = dataframe
+
+            return dataframe
 
         streaming = SIMULATION["streaming"]
 
-        batch_size = streaming["atm_batch_size"]
+        batch_size = min(
 
-        fraud_threshold = streaming["atm_high_value"]
+            streaming["atm_batch_size"],
 
-        sample_size = min(
-
-            len(debit_cards),
-
-            batch_size
+            len(debit_cards)
 
         )
 
-        sampled_cards = debit_cards.sample(sample_size)
+        sampled = debit_cards.sample(batch_size)
 
-        for _, card in sampled_cards.iterrows():
+        for _, card in sampled.iterrows():
 
-            account_index = account_df[
-                account_df.account_id == card.account_id
-            ].index
+            account_rows = self.context.account_df[
 
-            if len(account_index) == 0:
+                self.context.account_df.account_id
+                == card.account_id
+
+            ]
+
+            if account_rows.empty:
 
                 continue
 
-            idx = account_index[0]
-
-            balance = float(
-                account_df.at[idx, "balance"]
-            )
+            index = account_rows.index[0]
 
             amount = random.randint(
-                100,
-                20000
+
+                streaming["atm"]["minimum_amount"],
+
+                streaming["atm"]["maximum_amount"]
+
             )
 
-            status = "SUCCESS"
+            txn_id = atm_transaction_id()
 
-            if balance >= amount:
+            success = self.account_service.update_balance(
 
-                balance -= amount
+                account_index=index,
 
-            else:
+                amount=amount,
 
-                status = "FAILED"
+                transaction_id=txn_id,
 
-                amount = 0
+                operation="ATM"
 
-            account_df.at[idx, "balance"] = balance
+            )
+
+            balance = self.context.account_df.at[
+                index,
+                "balance"
+            ]
+
+            fraud = (
+
+                amount >= streaming["atm_high_value"]
+
+                and
+
+                random.random()
+                < streaming["fraud_probability"]
+
+            )
 
             rows.append({
 
-                "atm_transaction_id":
-                    atm_transaction_id(),
+                "atm_transaction_id": txn_id,
 
-                "card_id":
-                    card.card_id,
+                "card_id": card.card_id,
 
-                "account_id":
-                    card.account_id,
+                "account_id": card.account_id,
 
-                "customer_id":
-                    card.customer_id,
+                "customer_id": card.customer_id,
 
-                "atm_id":
-                    self.generate_atm_id(),
+                "atm_id": self.generate_atm_id(),
 
-                "withdrawal_amount":
-                    amount,
+                "withdrawal_amount": amount,
 
-                "available_balance":
-                    balance,
+                "available_balance": balance,
 
-                "status":
-                    status,
+                "status": "SUCCESS" if success else "FAILED",
 
-                "fraud_flag":
-                    amount >= fraud_threshold,
+                "fraud_flag": fraud,
 
-                "transaction_timestamp":
-                    datetime.now()
+                "transaction_timestamp": datetime.now()
 
             })
 
-        self.context.account_df = account_df
+        dataframe = pd.DataFrame(rows)
 
-        return pd.DataFrame(rows)
+        self.context.atm_transaction_df = dataframe
+
+        return dataframe

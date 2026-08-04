@@ -3,16 +3,20 @@ Publisher
 
 Generator
     ↓
-Local File
+Local Output
     ↓
 Azure Data Lake Storage
 """
 
 from pathlib import Path
+from time import perf_counter
+
+import pandas as pd
 
 from generators.common.config import (
     DATASETS,
     PATHS,
+    SETTINGS
 )
 
 from generators.common.file_writer import FileWriter
@@ -23,71 +27,132 @@ from generators.common.logger import logger
 
 class Publisher:
 
+    ###############################################################
+
     def __init__(self):
 
         self.storage = ADLSStorage()
 
-    ##############################################################
+    ###############################################################
 
     def publish(
         self,
-        dataframe,
+        dataframe: pd.DataFrame,
         dataset_name: str
     ):
+
+        if dataframe is None:
+
+            logger.info(
+                f"{dataset_name}: dataframe is None."
+            )
+
+            return None
+
+        if dataframe.empty:
+
+            logger.info(
+                f"{dataset_name}: no records generated."
+            )
+
+            return None
 
         if dataset_name not in DATASETS:
 
             raise ValueError(
-                f"{dataset_name} not found in environment.yml datasets."
+                f"{dataset_name} not found in environment.yml."
             )
 
         dataset = DATASETS[dataset_name]
 
+        dataset_type = dataset["type"]
+
         folder = dataset["folder"]
 
-        filename_prefix = dataset["filename_prefix"]
+        filename = dataset["filename_prefix"]
 
         file_format = dataset.get(
             "format",
             "csv"
         )
 
-        local_directory = OUTPUT_PATH / folder
+        ###########################################################
+        # Local Write
+        ###########################################################
+
+        output_directory = (
+
+            OUTPUT_PATH
+
+            / dataset_type
+
+            / folder
+
+        )
 
         local_file = FileWriter.write(
 
             dataframe=dataframe,
 
-            dataset=filename_prefix,
+            dataset=filename,
 
-            output_directory=local_directory,
+            output_directory=output_directory,
 
             file_format=file_format
 
         )
 
-        remote_path = (
+        ###########################################################
+        # ADLS Upload
+        ###########################################################
 
-            f"{PATHS['landing']}/"
+        if SETTINGS.get(
+            "upload_to_adls",
+            True
+        ):
 
-            f"{folder}/"
+            remote_path = (
 
-            f"{Path(local_file).name}"
+                f"{PATHS['landing']}/"
 
-        )
+                f"{dataset_type}/"
 
-        self.storage.upload(
+                f"{folder}/"
 
-            local_file,
+                f"{Path(local_file).name}"
 
-            remote_path
+            )
 
-        )
+            start = perf_counter()
 
-        logger.info(
+            self.storage.upload(
 
-            f"{dataset_name} published successfully."
+                local_file,
 
-        )
+                remote_path
+
+            )
+
+            elapsed = perf_counter() - start
+
+            logger.info(
+
+                f"Uploaded "
+
+                f"{len(dataframe)} rows "
+
+                f"to {remote_path} "
+
+                f"in {elapsed:.2f} sec."
+
+            )
+
+        else:
+
+            logger.info(
+
+                "ADLS upload disabled."
+
+            )
 
         return local_file

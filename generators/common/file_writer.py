@@ -1,8 +1,7 @@
 """
 File Writer
 
-Writes generated datasets to local storage before they are
-published to ADLS.
+Writes generated datasets locally before publishing to ADLS.
 """
 
 from pathlib import Path
@@ -29,10 +28,12 @@ class FileWriter:
         )
 
         timestamp = datetime.now().strftime(
-            "%Y%m%d_%H%M%S"
-        )
+            "%Y%m%d_%H%M%S_%f"
+        )[:-3]
 
-        filename = f"{dataset}_{timestamp}.{file_format}"
+        filename = (
+            f"{dataset}_{timestamp}.{file_format}"
+        )
 
         output_file = output_directory / filename
 
@@ -57,7 +58,7 @@ class FileWriter:
             )
 
         logger.info(
-            f"Written dataset '{dataset}' to {output_file}"
+            f"Written {len(dataframe)} rows -> {output_file}"
         )
 
         return output_file
