@@ -1,85 +1,100 @@
+"""
+Branch Generator
+"""
+
 import random
+
 import pandas as pd
 
 from generators.common.context import GenerationContext
 from generators.common.id_generator import branch_id
+from generators.common.config import SIMULATION
 
-from generators.reference.cities import CITIES
 from generators.reference.banks import BANKS
 from generators.reference.branches import BRANCHES
+from generators.reference.cities import CITIES
 
 
-def generate(
-    context: GenerationContext,
-    records=50
-):
+class BranchGenerator:
 
-    rows = []
+    def __init__(self, context: GenerationContext):
 
-    bank = BANKS["bank"]
+        self.context = context
 
-    ifsc_prefix = bank["ifsc_prefix"]
+    ###############################################################
 
-    cities = CITIES["cities"]
+    def generate(self):
 
-    used_ifsc = set()
+        rows = []
 
-    for _ in range(records):
+        bank = BANKS["bank"]
 
-        city = random.choice(cities)
+        ifsc_prefix = bank["ifsc_prefix"]
 
-        city_name = city["city"]
+        number_of_branches = SIMULATION["master"]["branches"]
 
-        state = city["state"]
+        used_ifsc = set()
 
-        zone = city["zone"]
+        cities = CITIES["cities"]
 
-        branch_name = random.choice(
-            BRANCHES["branches"][city_name]
-        )
+        for _ in range(number_of_branches):
 
-        while True:
+            city = random.choice(cities)
 
-            code = random.randint(1000,9999)
+            city_name = city["city"]
 
-            ifsc = f"{ifsc_prefix}{code}"
+            state = city["state"]
 
-            if ifsc not in used_ifsc:
+            zone = city["zone"]
 
-                used_ifsc.add(ifsc)
+            branch_name = random.choice(
+                BRANCHES["branches"][city_name]
+            )
 
-                break
+            while True:
 
-        bid = branch_id()
+                branch_code = random.randint(
+                    1000,
+                    9999
+                )
 
-        context.branch_ids.append(bid)
+                ifsc = (
+                    f"{ifsc_prefix}"
+                    f"{branch_code}"
+                )
 
-        rows.append({
+                if ifsc not in used_ifsc:
 
-            "branch_id": bid,
+                    used_ifsc.add(ifsc)
 
-            "branch_name": f"{branch_name} Branch",
+                    break
 
-            "branch_code": code,
+            rows.append({
 
-            "ifsc_code": ifsc,
+                "branch_id": branch_id(),
 
-            "bank_name": bank["name"],
+                "branch_name": branch_name,
 
-            "city": city_name,
+                "branch_code": branch_code,
 
-            "state": state,
+                "ifsc_code": ifsc,
 
-            "zone": zone,
+                "bank_name": bank["name"],
 
-            "country":"India",
+                "city": city_name,
 
-            "status":"ACTIVE"
+                "state": state,
 
-        })
+                "zone": zone,
 
-    df = pd.DataFrame(rows)
+                "country": "India",
 
-    context.branch_df = df
+                "status": "ACTIVE"
 
-    return df
+            })
+
+        dataframe = pd.DataFrame(rows)
+
+        self.context.branch_df = dataframe
+
+        return dataframe

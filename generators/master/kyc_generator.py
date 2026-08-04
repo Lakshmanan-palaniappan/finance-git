@@ -1,3 +1,7 @@
+"""
+KYC Generator
+"""
+
 import random
 from datetime import date, timedelta
 
@@ -14,58 +18,77 @@ DOCUMENT_TYPES = [
     "DRIVING_LICENSE"
 ]
 
-KYC_STATUS = [
-    "VERIFIED",
-    "PENDING",
-    "REJECTED"
-]
 
+class KYCGenerator:
 
-def generate(context: GenerationContext):
+    def __init__(self, context: GenerationContext):
 
-    rows = []
+        self.context = context
 
-    customer_df = context.customer_df
+    ###############################################################
 
-    for _, customer in customer_df.iterrows():
+    def generate(self):
 
-        kid = kyc_id()
+        rows = []
 
-        status = random.choices(
-            KYC_STATUS,
-            weights=[85, 10, 5],
-            k=1
-        )[0]
+        customers = self.context.customer_df
 
-        rows.append({
+        for _, customer in customers.iterrows():
 
-            "kyc_id": kid,
+            status = random.choices(
 
-            "customer_id": customer.customer_id,
+                [
+                    "VERIFIED",
+                    "PENDING",
+                    "REJECTED"
+                ],
 
-            "document_type": random.choice(
-                DOCUMENT_TYPES
-            ),
+                weights=[
+                    92,
+                    6,
+                    2
+                ]
 
-            "pan_number": customer.pan_number,
+            )[0]
 
-            "aadhaar_number": customer.aadhaar_number,
+            rows.append({
 
-            "verification_date":
-                date.today() -
-                timedelta(
-                    days=random.randint(1, 1000)
+                "kyc_id": kyc_id(),
+
+                "customer_id": customer.customer_id,
+
+                "document_type": random.choice(
+                    DOCUMENT_TYPES
                 ),
 
-            "verified_by":
-                f"EMP{random.randint(1000,9999)}",
+                "pan_number": customer.pan_number,
 
-            "status": status
+                "aadhaar_number":
+                    customer.aadhaar_number,
 
-        })
+                "verification_date":
 
-    df = pd.DataFrame(rows)
+                    date.today()
 
-    context.kyc_df = df
+                    - timedelta(
 
-    return df
+                        days=random.randint(
+                            1,
+                            365
+                        )
+
+                    ),
+
+                "verified_by":
+
+                    f"EMP{random.randint(1000,9999)}",
+
+                "status": status
+
+            })
+
+        dataframe = pd.DataFrame(rows)
+
+        self.context.customer_kyc_df = dataframe
+
+        return dataframe

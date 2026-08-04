@@ -1,7 +1,29 @@
-from pathlib import Path
-import yaml
+"""
+Indian Banking Reference Data
+"""
 
-ROOT = Path(__file__).resolve().parents[2]
+BANKS = [
+    "State Bank of India",
+    "HDFC Bank",
+    "ICICI Bank",
+    "Axis Bank",
+    "Kotak Mahindra Bank",
+    "Punjab National Bank",
+    "Canara Bank",
+    "Bank of Baroda",
+    "Union Bank of India",
+    "IDFC First Bank"
+]
 
-with open(ROOT / "config/reference/banks.yml") as f:
-    BANKS = yaml.safe_load(f)
+BANK_CODES = {
+    "State Bank of India": "SBIN",
+    "HDFC Bank": "HDFC",
+    "ICICI Bank": "ICIC",
+    "Axis Bank": "UTIB",
+    "Kotak Mahindra Bank": "KKBK",
+    "Punjab National Bank": "PUNB",
+    "Canara Bank": "CNRB",
+    "Bank of Baroda": "BARB",
+    "Union Bank of India": "UBIN",
+    "IDFC First Bank": "IDFB"
+}

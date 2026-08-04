@@ -1,72 +1,88 @@
+"""
+Exchange Rate Generator
+"""
+
 from datetime import date
 
 import pandas as pd
 
 
-def generate():
+class ExchangeRateGenerator:
 
-    rows = [
+    def __init__(self, context):
 
-        {
+        self.context = context
 
-            "base_currency": "INR",
+    ###############################################################
 
-            "target_currency": "USD",
+    def generate(self):
 
-            "exchange_rate": 0.0118,
+        rows = [
 
-            "effective_date": date.today()
+            {
 
-        },
+                "base_currency": "INR",
 
-        {
+                "target_currency": "USD",
 
-            "base_currency": "INR",
+                "exchange_rate": 0.0118,
 
-            "target_currency": "EUR",
+                "effective_date": date.today()
 
-            "exchange_rate": 0.0109,
+            },
 
-            "effective_date": date.today()
+            {
 
-        },
+                "base_currency": "INR",
 
-        {
+                "target_currency": "EUR",
 
-            "base_currency": "INR",
+                "exchange_rate": 0.0109,
 
-            "target_currency": "GBP",
+                "effective_date": date.today()
 
-            "exchange_rate": 0.0094,
+            },
 
-            "effective_date": date.today()
+            {
 
-        },
+                "base_currency": "INR",
 
-        {
+                "target_currency": "GBP",
 
-            "base_currency": "INR",
+                "exchange_rate": 0.0094,
 
-            "target_currency": "AED",
+                "effective_date": date.today()
 
-            "exchange_rate": 0.043,
+            },
 
-            "effective_date": date.today()
+            {
 
-        },
+                "base_currency": "INR",
 
-        {
+                "target_currency": "AED",
 
-            "base_currency": "INR",
+                "exchange_rate": 0.0432,
 
-            "target_currency": "SGD",
+                "effective_date": date.today()
 
-            "exchange_rate": 0.015,
+            },
 
-            "effective_date": date.today()
+            {
 
-        }
+                "base_currency": "INR",
 
-    ]
+                "target_currency": "SGD",
 
-    return pd.DataFrame(rows)
+                "exchange_rate": 0.0157,
+
+                "effective_date": date.today()
+
+            }
+
+        ]
+
+        dataframe = pd.DataFrame(rows)
+
+        self.context.exchange_rate_df = dataframe
+
+        return dataframe

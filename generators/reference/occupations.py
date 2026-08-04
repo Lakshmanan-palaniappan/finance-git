@@ -1,7 +1,28 @@
-from pathlib import Path
-import yaml
+"""
+Customer Occupations
+"""
 
-ROOT = Path(__file__).resolve().parents[2]
+OCCUPATIONS = [
 
-with open(ROOT / "config/reference/occupations.yml") as f:
-    OCCUPATIONS = yaml.safe_load(f)
+    "Software Engineer",
+    "Doctor",
+    "Teacher",
+    "Lawyer",
+    "Accountant",
+    "Business Owner",
+    "Government Employee",
+    "Farmer",
+    "Student",
+    "Retired",
+    "Consultant",
+    "Sales Executive",
+    "Marketing Manager",
+    "Architect",
+    "Mechanical Engineer",
+    "Civil Engineer",
+    "Electrician",
+    "Nurse",
+    "Police Officer",
+    "Professor"
+
+]

@@ -1,3 +1,7 @@
+"""
+Card Generator
+"""
+
 import random
 from datetime import date, timedelta
 
@@ -9,71 +13,190 @@ from generators.common.id_generator import card_id
 from generators.reference.card_rules import CARD_RULES
 
 
-def generate(
-    context: GenerationContext
-):
+class CardGenerator:
 
-    rows = []
+    def __init__(self, context: GenerationContext):
 
-    card_types = CARD_RULES["card_types"]
+        self.context = context
 
-    networks = CARD_RULES["networks"]
+    ###############################################################
 
-    statuses = CARD_RULES["status"]
+    @staticmethod
+    def generate_card_number():
 
-    for _, account in context.account_df.iterrows():
-
-        if random.random() < 0.85:
-
-            cid = card_id()
-
-            context.card_ids.append(cid)
-
-            ctype = random.choice(
-                list(card_types.keys())
+        return "".join(
+            random.choices(
+                "0123456789",
+                k=16
             )
+        )
 
-            rows.append({
+    ###############################################################
 
-                "card_id": cid,
+    @staticmethod
+    def generate_cvv():
 
-                "account_id":
-                    account.account_id,
+        return "".join(
+            random.choices(
+                "0123456789",
+                k=3
+            )
+        )
 
-                "customer_id":
-                    account.customer_id,
+    ###############################################################
 
-                "card_type":
-                    ctype,
+    def calculate_credit_limit(self, income):
 
-                "network":
-                    random.choice(networks),
+        if income < 500000:
+            return 50000
 
-                "daily_limit":
-                    card_types[ctype][
-                        "daily_limit"
-                    ],
+        if income < 1000000:
+            return 100000
 
-                "issue_date":
-                    date.today() -
-                    timedelta(
-                        days=random.randint(
-                            30,
-                            2000
-                        )
-                    ),
+        if income < 2000000:
+            return 250000
 
-                "expiry_date":
-                    date.today() +
-                    timedelta(days=1825),
+        if income < 5000000:
+            return 500000
 
-                "status":
-                    random.choice(statuses)
+        return 1000000
 
-            })
+    ###############################################################
 
-    df = pd.DataFrame(rows)
+    def generate(self):
 
-    context.card_df = df
+        rows = []
 
-    return df
+        networks = CARD_RULES["networks"]
+
+        statuses = CARD_RULES["status"]
+
+        account_df = self.context.account_df
+
+        customer_df = self.context.customer_df
+
+        customer_lookup = {
+
+            row.customer_id: row
+
+            for _, row in customer_df.iterrows()
+
+        }
+
+        for _, account in account_df.iterrows():
+
+            customer = customer_lookup[
+                account.customer_id
+            ]
+
+            # ------------------------------------------------------
+            # Debit Card
+            # Savings and Salary accounts always get Debit cards
+            # ------------------------------------------------------
+
+            if account.account_type in [
+                "Savings",
+                "Salary"
+            ]:
+
+                rows.append({
+
+                    "card_id": card_id(),
+
+                    "account_id": account.account_id,
+
+                    "customer_id": account.customer_id,
+
+                    "card_number": self.generate_card_number(),
+
+                    "card_type": "Debit",
+
+                    "network": random.choice(networks),
+
+                    "credit_limit": 0,
+
+                    "daily_limit":
+                        CARD_RULES["card_types"]["Debit"]["daily_limit"],
+
+                    "cvv": self.generate_cvv(),
+
+                    "issue_date":
+                        account.opened_date,
+
+                    "expiry_date":
+                        account.opened_date +
+                        timedelta(days=5 * 365),
+
+                    "status":
+                        random.choices(
+                            statuses,
+                            weights=[92, 5, 3]
+                        )[0]
+
+                })
+
+            # ------------------------------------------------------
+            # Credit Card
+            # Higher income customers only
+            # ------------------------------------------------------
+
+            if (
+
+                customer.annual_income > 700000
+
+                and random.random() < 0.45
+
+            ):
+
+                rows.append({
+
+                    "card_id": card_id(),
+
+                    "account_id": account.account_id,
+
+                    "customer_id": account.customer_id,
+
+                    "card_number": self.generate_card_number(),
+
+                    "card_type": "Credit",
+
+                    "network": random.choice(networks),
+
+                    "credit_limit":
+                        self.calculate_credit_limit(
+                            customer.annual_income
+                        ),
+
+                    "daily_limit":
+                        CARD_RULES["card_types"]["Credit"]["daily_limit"],
+
+                    "cvv": self.generate_cvv(),
+
+                    "issue_date":
+                        account.opened_date,
+
+                    "expiry_date":
+                        account.opened_date +
+                        timedelta(days=5 * 365),
+
+                    "status":
+                        random.choices(
+                            statuses,
+                            weights=[94, 3, 3]
+                        )[0]
+
+                })
+
+        dataframe = pd.DataFrame(rows)
+
+        self.context.card_df = dataframe
+
+        self.context.card_lookup = {
+
+            row.card_id: row
+
+            for _, row in dataframe.iterrows()
+
+        }
+
+        return dataframe

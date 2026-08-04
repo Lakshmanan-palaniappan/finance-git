@@ -1,7 +1,29 @@
-from pathlib import Path
-import yaml
+"""
+Account Rules
+"""
 
-ROOT = Path(__file__).resolve().parents[2]
+ACCOUNT_TYPES = [
 
-with open(ROOT / "config/reference/account_rules.yml") as f:
-    ACCOUNT_RULES = yaml.safe_load(f)
+    "Savings",
+    "Current",
+    "Salary"
+
+]
+
+ACCOUNT_STATUS = [
+
+    "ACTIVE",
+    "DORMANT",
+    "CLOSED"
+
+]
+
+MIN_BALANCE = {
+
+    "Savings": 5000,
+
+    "Current": 10000,
+
+    "Salary": 0
+
+}

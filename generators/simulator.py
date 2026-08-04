@@ -2,25 +2,25 @@
 Enterprise Banking Simulator
 """
 
-import schedule
 import time
+import schedule
 
 from generators.common.context import GenerationContext
+from generators.common.publish import Publisher
 from generators.common.logger import logger
+from generators.common.config import SIMULATION
 
-from generators.master.branch_generator import generate as generate_branches
-from generators.master.customer_generator import generate as generate_customers
-from generators.master.account_generator import generate as generate_accounts
-from generators.master.card_generator import generate as generate_cards
-from generators.master.loan_generator import generate as generate_loans
-from generators.master.kyc_generator import generate as generate_kyc
-from generators.master.exchange_rate_generator import generate as generate_exchange_rates
+from generators.master.branch_generator import BranchGenerator
+from generators.master.customer_generator import CustomerGenerator
+from generators.master.account_generator import AccountGenerator
+from generators.master.card_generator import CardGenerator
+from generators.master.loan_generator import LoanGenerator
+from generators.master.kyc_generator import KYCGenerator
+from generators.master.exchange_rate_generator import ExchangeRateGenerator
 
 from generators.streaming.transaction_generator import TransactionGenerator
 from generators.streaming.atm_generator import ATMGenerator
 from generators.streaming.login_generator import LoginGenerator
-
-from generators.common.publish import Publisher
 
 
 class BankingSimulator:
@@ -29,98 +29,165 @@ class BankingSimulator:
 
         self.context = GenerationContext()
 
-    ####################################################
+        self.publisher = Publisher()
+
+    ###############################################################
+
+    def publish_dataset(
+        self,
+        dataset_name,
+        dataframe
+    ):
+
+        logger.info(
+            f"Publishing {dataset_name}"
+        )
+
+        self.publisher.publish(
+            dataframe,
+            dataset_name
+        )
+
+    ###############################################################
 
     def load_master_data(self):
 
-        logger.info("Generating Branches")
-
-        Publisher.publish(
-            generate_branches(self.context),
-            "branches"
+        logger.info(
+            "Generating Master Data..."
         )
 
-        logger.info("Generating Customers")
+        datasets = [
 
-        Publisher.publish(
-            generate_customers(self.context),
-            "customers"
+            (
+                "branches",
+                BranchGenerator(self.context)
+            ),
+
+            (
+                "customers",
+                CustomerGenerator(self.context)
+            ),
+
+            (
+                "accounts",
+                AccountGenerator(self.context)
+            ),
+
+            (
+                "cards",
+                CardGenerator(self.context)
+            ),
+
+            (
+                "loans",
+                LoanGenerator(self.context)
+            ),
+
+            (
+                "customer_kyc",
+                KYCGenerator(self.context)
+            ),
+
+            (
+                "exchange_rates",
+                ExchangeRateGenerator(self.context)
+            )
+
+        ]
+
+        for dataset_name, generator in datasets:
+
+            dataframe = generator.generate()
+
+            self.publish_dataset(
+                dataset_name,
+                dataframe
+            )
+
+        logger.info(
+            "Master Data Completed."
         )
 
-        logger.info("Generating Accounts")
-
-        Publisher.publish(
-            generate_accounts(self.context),
-            "accounts"
-        )
-
-        logger.info("Generating Cards")
-
-        Publisher.publish(
-            generate_cards(self.context),
-            "cards"
-        )
-
-        logger.info("Generating Loans")
-
-        Publisher.publish(
-            generate_loans(self.context),
-            "loans"
-        )
-
-        logger.info("Generating KYC")
-
-        Publisher.publish(
-            generate_kyc(self.context),
-            "kyc"
-        )
-
-        logger.info("Generating Exchange Rates")
-
-        Publisher.publish(
-            generate_exchange_rates(),
-            "exchange_rates"
-        )
-
-    ####################################################
+    ###############################################################
 
     def transaction_job(self):
 
-        TransactionGenerator(self.context).run()
+        logger.info(
+            "Generating Transactions..."
+        )
 
-    ####################################################
+        dataframe = TransactionGenerator(
+            self.context
+        ).generate()
+
+        self.publish_dataset(
+            "transactions",
+            dataframe
+        )
+
+    ###############################################################
 
     def atm_job(self):
 
-        ATMGenerator(self.context).run()
+        logger.info(
+            "Generating ATM Transactions..."
+        )
 
-    ####################################################
+        dataframe = ATMGenerator(
+            self.context
+        ).generate()
+
+        self.publish_dataset(
+            "atm_transactions",
+            dataframe
+        )
+
+    ###############################################################
 
     def login_job(self):
 
-        LoginGenerator(self.context).run()
+        logger.info(
+            "Generating Login Activity..."
+        )
 
-    ####################################################
+        dataframe = LoginGenerator(
+            self.context
+        ).generate()
+
+        self.publish_dataset(
+            "login_activity",
+            dataframe
+        )
+
+    ###############################################################
 
     def start(self):
 
-        logger.info("Loading Master Data")
-
         self.load_master_data()
 
-        schedule.every(5).minutes.do(
+        stream = SIMULATION["streaming"]
+
+        schedule.every(
+            stream["transaction_interval"]
+        ).seconds.do(
             self.transaction_job
         )
 
-        schedule.every(5).minutes.do(
+        schedule.every(
+            stream["atm_interval"]
+        ).seconds.do(
             self.atm_job
         )
 
-        schedule.every(1).minutes.do(
+        schedule.every(
+            stream["login_interval"]
+        ).seconds.do(
             self.login_job
         )
 
-        logger.info("Simulator Started")
+        logger.info(
+            "Simulator Started..."
+        )
 
         while True:
 

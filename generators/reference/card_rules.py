@@ -1,7 +1,31 @@
-from pathlib import Path
-import yaml
+"""
+Card Rules
+"""
 
-ROOT = Path(__file__).resolve().parents[2]
+CARD_TYPES = [
 
-with open(ROOT / "config/reference/card_rules.yml") as f:
-    CARD_RULES = yaml.safe_load(f)
+    "Debit",
+
+    "Credit"
+
+]
+
+CARD_NETWORKS = [
+
+    "Visa",
+
+    "Mastercard",
+
+    "RuPay"
+
+]
+
+CARD_STATUS = [
+
+    "ACTIVE",
+
+    "BLOCKED",
+
+    "EXPIRED"
+
+]
