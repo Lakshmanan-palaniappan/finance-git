@@ -1,5 +1,13 @@
 """
-Enterprise Configuration Loader
+Central Configuration Loader
+
+Loads:
+
+- .env
+- config/environment.yml
+- config/metadata.yml
+
+No other module should directly read YAML or environment variables.
 """
 
 from pathlib import Path
@@ -8,49 +16,57 @@ import os
 import yaml
 from dotenv import load_dotenv
 
+# ---------------------------------------------------------------------
+# Root
+# ---------------------------------------------------------------------
+
 ROOT_DIR = Path(__file__).resolve().parents[2]
 
 CONFIG_DIR = ROOT_DIR / "config"
 
+# ---------------------------------------------------------------------
+# Environment Variables
+# ---------------------------------------------------------------------
+
 load_dotenv(ROOT_DIR / ".env")
 
+# ---------------------------------------------------------------------
+# YAML
+# ---------------------------------------------------------------------
 
-def load_yaml(file_name: str):
+with open(CONFIG_DIR / "environment.yml", "r") as file:
 
-    with open(CONFIG_DIR / file_name, "r") as file:
+    ENVIRONMENT = yaml.safe_load(file)
 
-        return yaml.safe_load(file)
+with open(CONFIG_DIR / "metadata.yml", "r") as file:
 
+    METADATA = yaml.safe_load(file)
 
-ENVIRONMENT = load_yaml("environment.yml")
-METADATA = load_yaml("metadata.yml")
+# ---------------------------------------------------------------------
+# Project
+# ---------------------------------------------------------------------
 
-
-PROJECT = ENVIRONMENT["project"]
-
-AZURE = ENVIRONMENT["azure"]
-
-UNITY_CATALOG = ENVIRONMENT["unity_catalog"]
-
-PATHS = ENVIRONMENT["paths"]
-
-DATASETS = ENVIRONMENT["datasets"]
-
-SIMULATION = ENVIRONMENT["simulation"]
-
-MONITORING = ENVIRONMENT["monitoring"]
-
+PROJECT = ENVIRONMENT.get("project", {})
 
 # ---------------------------------------------------------------------
 # Azure
 # ---------------------------------------------------------------------
-# ---------------------------------------------------------------------
-# Azure
-# ---------------------------------------------------------------------
 
-AZURE_STORAGE_ACCOUNT = AZURE["storage_account"]
+AZURE = ENVIRONMENT.get("azure", {})
 
-AZURE_CONTAINER = AZURE["container"]
+AZURE_STORAGE_ACCOUNT = AZURE.get("storage_account")
+
+AZURE_CONTAINER = AZURE.get("container")
+
+if not AZURE_STORAGE_ACCOUNT:
+    raise ValueError("storage_account missing in environment.yml")
+
+if not AZURE_CONTAINER:
+    raise ValueError("container missing in environment.yml")
+
+# ---------------------------------------------------------------------
+# Authentication (.env)
+# ---------------------------------------------------------------------
 
 AZURE_TENANT_ID = os.getenv("AZURE_TENANT_ID")
 
@@ -58,12 +74,92 @@ AZURE_CLIENT_ID = os.getenv("AZURE_CLIENT_ID")
 
 AZURE_CLIENT_SECRET = os.getenv("AZURE_CLIENT_SECRET")
 
-ENV = os.getenv("ENV", "local")
+# ---------------------------------------------------------------------
+# Unity Catalog
+# ---------------------------------------------------------------------
 
-LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
+UNITY_CATALOG = ENVIRONMENT.get(
+    "unity_catalog",
+    {}
+)
 
-TEMP_DIRECTORY = os.getenv("TEMP_DIRECTORY", "temp")
+# ---------------------------------------------------------------------
+# Paths
+# ---------------------------------------------------------------------
 
-ARCHIVE_DIRECTORY = os.getenv("ARCHIVE_DIRECTORY", "archive")
+PATHS = ENVIRONMENT.get(
+    "paths",
+    {}
+)
 
-OUTPUT_DIRECTORY = os.getenv("OUTPUT_DIRECTORY", "output")
+# ---------------------------------------------------------------------
+# Datasets
+# ---------------------------------------------------------------------
+
+DATASETS = ENVIRONMENT.get(
+    "datasets",
+    {}
+)
+
+# ---------------------------------------------------------------------
+# Simulation
+# ---------------------------------------------------------------------
+
+SIMULATION = ENVIRONMENT.get(
+    "simulation",
+    {}
+)
+
+# ---------------------------------------------------------------------
+# Metadata
+# ---------------------------------------------------------------------
+
+SCHEMAS = METADATA.get(
+    "schemas",
+    {}
+)
+
+# ---------------------------------------------------------------------
+# Local Directories
+# ---------------------------------------------------------------------
+
+OUTPUT_DIRECTORY = Path(
+
+    os.getenv(
+        "OUTPUT_DIRECTORY",
+        ROOT_DIR / "output"
+    )
+
+)
+
+TEMP_DIRECTORY = Path(
+
+    os.getenv(
+        "TEMP_DIRECTORY",
+        ROOT_DIR / "temp"
+    )
+
+)
+
+ARCHIVE_DIRECTORY = Path(
+
+    os.getenv(
+        "ARCHIVE_DIRECTORY",
+        ROOT_DIR / "archive"
+    )
+
+)
+
+# ---------------------------------------------------------------------
+# Logging
+# ---------------------------------------------------------------------
+
+LOG_LEVEL = os.getenv(
+    "LOG_LEVEL",
+    "INFO"
+)
+
+ENV = os.getenv(
+    "ENV",
+    "local"
+)

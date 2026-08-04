@@ -1,29 +1,21 @@
 """
-Account Rules
+Account Rules Loader
 """
 
-ACCOUNT_TYPES = [
+from pathlib import Path
 
-    "Savings",
-    "Current",
-    "Salary"
+import yaml
 
-]
+REFERENCE_DIR = (
+    Path(__file__).resolve().parents[2]
+    / "config"
+    / "reference"
+)
 
-ACCOUNT_STATUS = [
+with open(
+    REFERENCE_DIR / "account_rules.yml",
+    "r",
+    encoding="utf-8"
+) as file:
 
-    "ACTIVE",
-    "DORMANT",
-    "CLOSED"
-
-]
-
-MIN_BALANCE = {
-
-    "Savings": 5000,
-
-    "Current": 10000,
-
-    "Salary": 0
-
-}
+    ACCOUNT_RULES = yaml.safe_load(file)

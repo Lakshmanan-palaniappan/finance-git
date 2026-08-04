@@ -87,7 +87,7 @@ class BranchGenerator:
 
                 "zone": zone,
 
-                "country": "India",
+                "country": bank.get("country", "India"),
 
                 "status": "ACTIVE"
 
@@ -96,5 +96,13 @@ class BranchGenerator:
         dataframe = pd.DataFrame(rows)
 
         self.context.branch_df = dataframe
+
+        self.context.branch_lookup = {
+
+            row.branch_id: row
+
+            for _, row in dataframe.iterrows()
+
+        }
 
         return dataframe

@@ -3,11 +3,12 @@ Card Generator
 """
 
 import random
-from datetime import date, timedelta
+from datetime import timedelta
 
 import pandas as pd
 
 from generators.common.context import GenerationContext
+from generators.common.config import SIMULATION
 from generators.common.id_generator import card_id
 
 from generators.reference.card_rules import CARD_RULES
@@ -22,14 +23,22 @@ class CardGenerator:
     ###############################################################
 
     @staticmethod
-    def generate_card_number():
+    def generate_card_number(existing_numbers):
 
-        return "".join(
-            random.choices(
-                "0123456789",
-                k=16
+        while True:
+
+            number = "".join(
+                random.choices(
+                    "0123456789",
+                    k=16
+                )
             )
-        )
+
+            if number not in existing_numbers:
+
+                existing_numbers.add(number)
+
+                return number
 
     ###############################################################
 
@@ -45,7 +54,8 @@ class CardGenerator:
 
     ###############################################################
 
-    def calculate_credit_limit(self, income):
+    @staticmethod
+    def calculate_credit_limit(income):
 
         if income < 500000:
             return 50000
@@ -67,13 +77,21 @@ class CardGenerator:
 
         rows = []
 
-        networks = CARD_RULES["networks"]
-
-        statuses = CARD_RULES["status"]
-
         account_df = self.context.account_df
 
         customer_df = self.context.customer_df
+
+        if account_df.empty:
+
+            raise ValueError(
+                "Account data is empty. Run AccountGenerator before CardGenerator."
+            )
+
+        if customer_df.empty:
+
+            raise ValueError(
+                "Customer data is empty. Run CustomerGenerator before CardGenerator."
+            )
 
         customer_lookup = {
 
@@ -83,20 +101,35 @@ class CardGenerator:
 
         }
 
+        networks = CARD_RULES["networks"]
+
+        statuses = CARD_RULES["status"]
+
+        debit_limit = CARD_RULES["card_types"]["Debit"]["daily_limit"]
+
+        credit_limit_daily = CARD_RULES["card_types"]["Credit"]["daily_limit"]
+
+        credit_income_threshold = SIMULATION["master"].get(
+            "credit_card_income",
+            700000
+        )
+
+        generated_numbers = set()
+
         for _, account in account_df.iterrows():
 
-            customer = customer_lookup[
-                account.customer_id
-            ]
+            customer = customer_lookup[account.customer_id]
 
-            # ------------------------------------------------------
+            # --------------------------------------------------
             # Debit Card
-            # Savings and Salary accounts always get Debit cards
-            # ------------------------------------------------------
+            # --------------------------------------------------
 
             if account.account_type in [
+
                 "Savings",
+
                 "Salary"
+
             ]:
 
                 rows.append({
@@ -107,7 +140,9 @@ class CardGenerator:
 
                     "customer_id": account.customer_id,
 
-                    "card_number": self.generate_card_number(),
+                    "card_number": self.generate_card_number(
+                        generated_numbers
+                    ),
 
                     "card_type": "Debit",
 
@@ -115,34 +150,34 @@ class CardGenerator:
 
                     "credit_limit": 0,
 
-                    "daily_limit":
-                        CARD_RULES["card_types"]["Debit"]["daily_limit"],
+                    "daily_limit": debit_limit,
 
                     "cvv": self.generate_cvv(),
 
-                    "issue_date":
-                        account.opened_date,
+                    "issue_date": account.opened_date,
 
-                    "expiry_date":
-                        account.opened_date +
-                        timedelta(days=5 * 365),
+                    "expiry_date": (
+                        account.opened_date
+                        + timedelta(days=5 * 365)
+                    ),
 
-                    "status":
-                        random.choices(
-                            statuses,
-                            weights=[92, 5, 3]
-                        )[0]
+                    "status": random.choices(
+
+                        statuses,
+
+                        weights=[92, 5, 3]
+
+                    )[0]
 
                 })
 
-            # ------------------------------------------------------
+            # --------------------------------------------------
             # Credit Card
-            # Higher income customers only
-            # ------------------------------------------------------
+            # --------------------------------------------------
 
             if (
 
-                customer.annual_income > 700000
+                customer.annual_income >= credit_income_threshold
 
                 and random.random() < 0.45
 
@@ -156,34 +191,36 @@ class CardGenerator:
 
                     "customer_id": account.customer_id,
 
-                    "card_number": self.generate_card_number(),
+                    "card_number": self.generate_card_number(
+                        generated_numbers
+                    ),
 
                     "card_type": "Credit",
 
                     "network": random.choice(networks),
 
-                    "credit_limit":
-                        self.calculate_credit_limit(
-                            customer.annual_income
-                        ),
+                    "credit_limit": self.calculate_credit_limit(
+                        customer.annual_income
+                    ),
 
-                    "daily_limit":
-                        CARD_RULES["card_types"]["Credit"]["daily_limit"],
+                    "daily_limit": credit_limit_daily,
 
                     "cvv": self.generate_cvv(),
 
-                    "issue_date":
-                        account.opened_date,
+                    "issue_date": account.opened_date,
 
-                    "expiry_date":
-                        account.opened_date +
-                        timedelta(days=5 * 365),
+                    "expiry_date": (
+                        account.opened_date
+                        + timedelta(days=5 * 365)
+                    ),
 
-                    "status":
-                        random.choices(
-                            statuses,
-                            weights=[94, 3, 3]
-                        )[0]
+                    "status": random.choices(
+
+                        statuses,
+
+                        weights=[94, 3, 3]
+
+                    )[0]
 
                 })
 

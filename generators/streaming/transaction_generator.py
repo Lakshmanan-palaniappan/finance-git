@@ -8,6 +8,7 @@ from datetime import datetime
 import pandas as pd
 
 from generators.common.context import GenerationContext
+from generators.common.config import SIMULATION
 from generators.common.id_generator import transaction_id
 
 from generators.reference.transaction_rules import TRANSACTION_RULES
@@ -25,52 +26,73 @@ class TransactionGenerator:
 
         rows = []
 
-        rules = TRANSACTION_RULES
-
-        transaction_types = list(
-            rules["transaction_types"].keys()
-        )
-
-        channels = rules["channels"]
-
         account_df = self.context.account_df
 
-        batch_size = min(
+        if account_df.empty:
+
+            raise ValueError(
+                "Account data is empty. Run AccountGenerator before TransactionGenerator."
+            )
+
+        transaction_rules = TRANSACTION_RULES["transaction_types"]
+
+        transaction_types = list(transaction_rules.keys())
+
+        channels = TRANSACTION_RULES["channels"]
+
+        streaming = SIMULATION["streaming"]
+
+        batch_size = streaming["transaction_batch_size"]
+
+        fraud_threshold = streaming["high_value_transaction"]
+
+        sample_size = min(
+
             len(account_df),
-            500
+
+            batch_size
+
         )
 
-        sampled_accounts = account_df.sample(batch_size)
+        sampled_accounts = account_df.sample(sample_size)
 
         for idx, account in sampled_accounts.iterrows():
 
-            txn_type = random.choice(
+            transaction_type = random.choice(
                 transaction_types
             )
 
-            limits = rules["transaction_types"][
-                txn_type
+            limits = transaction_rules[
+                transaction_type
             ]
 
             amount = random.randint(
+
                 limits["min_amount"],
+
                 limits["max_amount"]
+
             )
 
-            current_balance = float(account.balance)
+            balance = float(account.balance)
 
             status = "SUCCESS"
 
-            if txn_type in [
+            if transaction_type in [
+
                 "Withdrawal",
+
                 "ATM",
+
                 "Transfer",
+
                 "UPI"
+
             ]:
 
-                if current_balance >= amount:
+                if balance >= amount:
 
-                    current_balance -= amount
+                    balance -= amount
 
                 else:
 
@@ -78,15 +100,9 @@ class TransactionGenerator:
 
             else:
 
-                current_balance += amount
+                balance += amount
 
-            account_df.at[idx, "balance"] = current_balance
-
-            fraud = False
-
-            if amount > 100000:
-
-                fraud = True
+            account_df.at[idx, "balance"] = balance
 
             rows.append({
 
@@ -100,13 +116,13 @@ class TransactionGenerator:
                     account.customer_id,
 
                 "transaction_type":
-                    txn_type,
+                    transaction_type,
 
                 "amount":
                     amount,
 
                 "balance_after_transaction":
-                    current_balance,
+                    balance,
 
                 "channel":
                     random.choice(channels),
@@ -115,7 +131,7 @@ class TransactionGenerator:
                     status,
 
                 "fraud_flag":
-                    fraud,
+                    amount >= fraud_threshold,
 
                 "transaction_timestamp":
                     datetime.now()
@@ -125,5 +141,7 @@ class TransactionGenerator:
         self.context.account_df = account_df
 
         dataframe = pd.DataFrame(rows)
+
+        self.context.transaction_df = dataframe
 
         return dataframe

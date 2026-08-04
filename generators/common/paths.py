@@ -1,15 +1,64 @@
+"""
+Project Paths
+
+All filesystem paths used by the simulator.
+"""
+
 from pathlib import Path
 
-from generators.common.config import OUTPUT_DIRECTORY
+from generators.common.config import (
+    ROOT_DIR,
+    OUTPUT_DIRECTORY,
+    TEMP_DIRECTORY,
+    ARCHIVE_DIRECTORY,
+)
 
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
+# ---------------------------------------------------------
+# Project Root
+# ---------------------------------------------------------
 
-OUTPUT_PATH = PROJECT_ROOT / OUTPUT_DIRECTORY
+PROJECT_ROOT = ROOT_DIR
+
+# ---------------------------------------------------------
+# Config
+# ---------------------------------------------------------
 
 CONFIG_PATH = PROJECT_ROOT / "config"
 
-TEMP_PATH = PROJECT_ROOT / "temp"
+REFERENCE_PATH = CONFIG_PATH / "reference"
 
-ARCHIVE_PATH = PROJECT_ROOT / "archive"
+# ---------------------------------------------------------
+# Local Output
+# ---------------------------------------------------------
+
+OUTPUT_PATH = Path(OUTPUT_DIRECTORY)
+
+TEMP_PATH = Path(TEMP_DIRECTORY)
+
+ARCHIVE_PATH = Path(ARCHIVE_DIRECTORY)
 
 LOG_PATH = PROJECT_ROOT / "logs"
+
+# ---------------------------------------------------------
+# Create Directories
+# ---------------------------------------------------------
+
+for directory in [
+
+    OUTPUT_PATH,
+
+    TEMP_PATH,
+
+    ARCHIVE_PATH,
+
+    LOG_PATH,
+
+]:
+
+    directory.mkdir(
+
+        parents=True,
+
+        exist_ok=True
+
+    )

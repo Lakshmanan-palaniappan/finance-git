@@ -1,29 +1,21 @@
 """
-Indian Banking Reference Data
+Bank Reference Loader
 """
 
-BANKS = [
-    "State Bank of India",
-    "HDFC Bank",
-    "ICICI Bank",
-    "Axis Bank",
-    "Kotak Mahindra Bank",
-    "Punjab National Bank",
-    "Canara Bank",
-    "Bank of Baroda",
-    "Union Bank of India",
-    "IDFC First Bank"
-]
+from pathlib import Path
 
-BANK_CODES = {
-    "State Bank of India": "SBIN",
-    "HDFC Bank": "HDFC",
-    "ICICI Bank": "ICIC",
-    "Axis Bank": "UTIB",
-    "Kotak Mahindra Bank": "KKBK",
-    "Punjab National Bank": "PUNB",
-    "Canara Bank": "CNRB",
-    "Bank of Baroda": "BARB",
-    "Union Bank of India": "UBIN",
-    "IDFC First Bank": "IDFB"
-}
+import yaml
+
+REFERENCE_DIR = (
+    Path(__file__).resolve().parents[2]
+    / "config"
+    / "reference"
+)
+
+with open(
+    REFERENCE_DIR / "banks.yml",
+    "r",
+    encoding="utf-8"
+) as file:
+
+    BANKS = yaml.safe_load(file)

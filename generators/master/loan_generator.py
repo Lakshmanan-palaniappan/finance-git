@@ -9,6 +9,7 @@ from datetime import date, timedelta
 import pandas as pd
 
 from generators.common.context import GenerationContext
+from generators.common.config import SIMULATION
 from generators.common.id_generator import loan_id
 
 from generators.reference.loan_rules import LOAN_RULES
@@ -31,6 +32,9 @@ class LoanGenerator:
 
         months = tenure_years * 12
 
+        if annual_rate == 0:
+            return round(principal / months, 2)
+
         monthly_rate = annual_rate / 12 / 100
 
         emi = (
@@ -42,6 +46,7 @@ class LoanGenerator:
             * math.pow(
                 1 + monthly_rate,
                 months
+
             )
 
         ) / (
@@ -49,6 +54,7 @@ class LoanGenerator:
             math.pow(
                 1 + monthly_rate,
                 months
+
             ) - 1
 
         )
@@ -63,31 +69,70 @@ class LoanGenerator:
 
         customers = self.context.customer_df
 
+        if customers.empty:
+
+            raise ValueError(
+                "Customer data is empty. Run CustomerGenerator before LoanGenerator."
+            )
+
         rules = LOAN_RULES["loan_types"]
 
         statuses = LOAN_RULES["status"]
+
+        loan_config = SIMULATION["master"].get(
+
+            "loan",
+
+            {
+
+                "income_probability": {
+
+                    "default": 0.15,
+
+                    "medium": 0.30,
+
+                    "high": 0.50
+
+                },
+
+                "interest_rate": {
+
+                    "minimum": 7.5,
+
+                    "maximum": 12.5
+
+                }
+
+            }
+
+        )
+
+        probability_rules = loan_config["income_probability"]
+
+        rate_rules = loan_config["interest_rate"]
 
         for _, customer in customers.iterrows():
 
             income = customer.annual_income
 
-            # ------------------------------
-            # Loan Eligibility
-            # ------------------------------
-
-            probability = 0.15
+            probability = probability_rules["default"]
 
             if income > 700000:
-                probability = 0.30
+
+                probability = probability_rules["medium"]
 
             if income > 1500000:
-                probability = 0.50
+
+                probability = probability_rules["high"]
 
             if random.random() > probability:
+
                 continue
 
             loan_type = random.choice(
+
                 list(rules.keys())
+
             )
 
             rule = rules[loan_type]
@@ -101,15 +146,23 @@ class LoanGenerator:
             )
 
             tenure = random.choice(
+
                 rule["tenure_years"]
+
             )
 
             rate = round(
+
                 random.uniform(
-                    7.5,
-                    12.5
+
+                    rate_rules["minimum"],
+
+                    rate_rules["maximum"]
+
                 ),
+
                 2
+
             )
 
             emi = self.calculate_emi(
@@ -125,8 +178,11 @@ class LoanGenerator:
             total_months = tenure * 12
 
             paid = random.randint(
+
                 0,
+
                 total_months
+
             )
 
             remaining = total_months - paid
@@ -146,8 +202,11 @@ class LoanGenerator:
                 - timedelta(
 
                     days=random.randint(
+
                         30,
+
                         3650
+
                     )
 
                 )
@@ -158,57 +217,43 @@ class LoanGenerator:
 
                 "loan_id": loan_id(),
 
-                "customer_id":
-                    customer.customer_id,
+                "customer_id": customer.customer_id,
 
-                "branch_id":
-                    customer.branch_id,
+                "branch_id": customer.branch_id,
 
-                "loan_type":
-                    loan_type,
+                "loan_type": loan_type,
 
-                "loan_amount":
-                    amount,
+                "loan_amount": amount,
 
-                "interest_rate":
-                    rate,
+                "interest_rate": rate,
 
-                "tenure_years":
-                    tenure,
+                "tenure_years": tenure,
 
-                "monthly_emi":
-                    emi,
+                "monthly_emi": emi,
 
-                "paid_emi":
-                    paid,
+                "paid_emi": paid,
 
-                "remaining_emi":
-                    remaining,
+                "remaining_emi": remaining,
 
-                "outstanding_balance":
-                    outstanding,
+                "outstanding_balance": outstanding,
 
-                "loan_to_income_ratio":
-                    round(
-                        amount / income,
-                        2
-                    ),
+                "loan_to_income_ratio": round(
 
-                "sanction_date":
-                    sanction_date,
+                    amount / income,
 
-                "status":
-                    random.choices(
+                    2
 
-                        statuses,
+                ),
 
-                        weights=[
-                            85,
-                            10,
-                            5
-                        ]
+                "sanction_date": sanction_date,
 
-                    )[0]
+                "status": random.choices(
+
+                    statuses,
+
+                    weights=[85, 10, 5]
+
+                )[0]
 
             })
 

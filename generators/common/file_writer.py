@@ -1,44 +1,63 @@
 """
-Write generated datasets locally.
+File Writer
+
+Writes generated datasets to local storage before they are
+published to ADLS.
 """
 
 from pathlib import Path
 from datetime import datetime
 
-from generators.common.config import DATASETS
+import pandas as pd
+
+from generators.common.logger import logger
 
 
 class FileWriter:
 
     @staticmethod
-    def write(df, dataset, output_directory):
+    def write(
+        dataframe: pd.DataFrame,
+        dataset: str,
+        output_directory: Path,
+        file_format: str = "csv"
+    ) -> Path:
 
-        Path(output_directory).mkdir(
-
+        output_directory.mkdir(
             parents=True,
-
             exist_ok=True
-
         )
 
-        prefix = DATASETS[dataset]["filename_prefix"]
-
-        filename = (
-
-            f"{prefix}_"
-
-            f"{datetime.now():%Y%m%d_%H%M%S}.csv"
-
+        timestamp = datetime.now().strftime(
+            "%Y%m%d_%H%M%S"
         )
 
-        path = Path(output_directory) / filename
+        filename = f"{dataset}_{timestamp}.{file_format}"
 
-        df.to_csv(
+        output_file = output_directory / filename
 
-            path,
+        if file_format.lower() == "csv":
 
-            index=False
+            dataframe.to_csv(
+                output_file,
+                index=False
+            )
 
+        elif file_format.lower() == "parquet":
+
+            dataframe.to_parquet(
+                output_file,
+                index=False
+            )
+
+        else:
+
+            raise ValueError(
+                f"Unsupported file format: {file_format}"
+            )
+
+        logger.info(
+            f"Written dataset '{dataset}' to {output_file}"
         )
 
-        return str(path)
+        return output_file

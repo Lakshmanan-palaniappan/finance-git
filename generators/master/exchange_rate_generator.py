@@ -6,10 +6,13 @@ from datetime import date
 
 import pandas as pd
 
+from generators.common.context import GenerationContext
+from generators.reference.exchange_rates import EXCHANGE_RATES
+
 
 class ExchangeRateGenerator:
 
-    def __init__(self, context):
+    def __init__(self, context: GenerationContext):
 
         self.context = context
 
@@ -17,69 +20,21 @@ class ExchangeRateGenerator:
 
     def generate(self):
 
-        rows = [
+        rows = []
 
-            {
+        for rate in EXCHANGE_RATES["exchange_rates"]:
 
-                "base_currency": "INR",
+            rows.append({
 
-                "target_currency": "USD",
+                "base_currency": rate["base_currency"],
 
-                "exchange_rate": 0.0118,
+                "target_currency": rate["target_currency"],
 
-                "effective_date": date.today()
-
-            },
-
-            {
-
-                "base_currency": "INR",
-
-                "target_currency": "EUR",
-
-                "exchange_rate": 0.0109,
+                "exchange_rate": rate["exchange_rate"],
 
                 "effective_date": date.today()
 
-            },
-
-            {
-
-                "base_currency": "INR",
-
-                "target_currency": "GBP",
-
-                "exchange_rate": 0.0094,
-
-                "effective_date": date.today()
-
-            },
-
-            {
-
-                "base_currency": "INR",
-
-                "target_currency": "AED",
-
-                "exchange_rate": 0.0432,
-
-                "effective_date": date.today()
-
-            },
-
-            {
-
-                "base_currency": "INR",
-
-                "target_currency": "SGD",
-
-                "exchange_rate": 0.0157,
-
-                "effective_date": date.today()
-
-            }
-
-        ]
+            })
 
         dataframe = pd.DataFrame(rows)
 

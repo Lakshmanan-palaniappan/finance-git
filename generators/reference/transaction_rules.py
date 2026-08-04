@@ -1,37 +1,21 @@
 """
-Transaction Rules
+Transaction Rules Loader
 """
 
-TRANSACTION_TYPES = [
+from pathlib import Path
 
-    "Deposit",
+import yaml
 
-    "Withdrawal",
+REFERENCE_DIR = (
+    Path(__file__).resolve().parents[2]
+    / "config"
+    / "reference"
+)
 
-    "Transfer",
+with open(
+    REFERENCE_DIR / "transaction_rules.yml",
+    "r",
+    encoding="utf-8"
+) as file:
 
-    "UPI",
-
-    "ATM"
-
-]
-
-TRANSACTION_STATUS = [
-
-    "SUCCESS",
-
-    "FAILED"
-
-]
-
-CHANNELS = [
-
-    "Mobile",
-
-    "Internet Banking",
-
-    "ATM",
-
-    "Branch"
-
-]
+    TRANSACTION_RULES = yaml.safe_load(file)

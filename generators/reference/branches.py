@@ -1,21 +1,21 @@
 """
-Branch Reference Data
+Branch Reference Loader
 """
 
-BRANCH_TYPES = [
+from pathlib import Path
 
-    "Urban",
-    "Metro",
-    "Semi Urban",
-    "Rural"
+import yaml
 
-]
+REFERENCE_DIR = (
+    Path(__file__).resolve().parents[2]
+    / "config"
+    / "reference"
+)
 
-REGIONS = [
+with open(
+    REFERENCE_DIR / "branches.yml",
+    "r",
+    encoding="utf-8"
+) as file:
 
-    "North",
-    "South",
-    "East",
-    "West"
-
-]
+    BRANCHES = yaml.safe_load(file)

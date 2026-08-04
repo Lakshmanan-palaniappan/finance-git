@@ -1,39 +1,21 @@
 """
-Loan Rules
+Loan Rules Loader
 """
 
-LOAN_TYPES = [
+from pathlib import Path
 
-    "Home",
+import yaml
 
-    "Personal",
+REFERENCE_DIR = (
+    Path(__file__).resolve().parents[2]
+    / "config"
+    / "reference"
+)
 
-    "Vehicle",
+with open(
+    REFERENCE_DIR / "loan_rules.yml",
+    "r",
+    encoding="utf-8"
+) as file:
 
-    "Education",
-
-    "Gold"
-
-]
-
-LOAN_STATUS = [
-
-    "ACTIVE",
-
-    "CLOSED"
-
-]
-
-INTEREST_RATE = {
-
-    "Home": 8.5,
-
-    "Personal": 12.5,
-
-    "Vehicle": 9.2,
-
-    "Education": 7.8,
-
-    "Gold": 10.0
-
-}
+    LOAN_RULES = yaml.safe_load(file)
