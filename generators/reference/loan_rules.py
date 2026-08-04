@@ -1,7 +1,39 @@
-from pathlib import Path
-import yaml
+"""
+Loan Rules
+"""
 
-ROOT = Path(__file__).resolve().parents[2]
+LOAN_TYPES = [
 
-with open(ROOT / "config/reference/loan_rules.yml") as f:
-    LOAN_RULES = yaml.safe_load(f)
+    "Home",
+
+    "Personal",
+
+    "Vehicle",
+
+    "Education",
+
+    "Gold"
+
+]
+
+LOAN_STATUS = [
+
+    "ACTIVE",
+
+    "CLOSED"
+
+]
+
+INTEREST_RATE = {
+
+    "Home": 8.5,
+
+    "Personal": 12.5,
+
+    "Vehicle": 9.2,
+
+    "Education": 7.8,
+
+    "Gold": 10.0
+
+}

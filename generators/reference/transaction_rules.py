@@ -1,7 +1,37 @@
-from pathlib import Path
-import yaml
+"""
+Transaction Rules
+"""
 
-ROOT = Path(__file__).resolve().parents[2]
+TRANSACTION_TYPES = [
 
-with open(ROOT / "config/reference/transaction_rules.yml") as f:
-    TRANSACTION_RULES = yaml.safe_load(f)
+    "Deposit",
+
+    "Withdrawal",
+
+    "Transfer",
+
+    "UPI",
+
+    "ATM"
+
+]
+
+TRANSACTION_STATUS = [
+
+    "SUCCESS",
+
+    "FAILED"
+
+]
+
+CHANNELS = [
+
+    "Mobile",
+
+    "Internet Banking",
+
+    "ATM",
+
+    "Branch"
+
+]

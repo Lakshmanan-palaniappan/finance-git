@@ -1,100 +1,141 @@
+"""
+Customer Generator
+"""
+
 import random
 import string
 
 import pandas as pd
 
 from generators.common.context import GenerationContext
-from generators.common.id_generator import customer_id
+from generators.common.config import SIMULATION
 from generators.common.faker_provider import fake
+from generators.common.id_generator import customer_id
 
-from generators.reference.occupations import OCCUPATIONS
 from generators.reference.cities import CITIES
+from generators.reference.occupations import OCCUPATIONS
 
 
-def generate(
-        context: GenerationContext,
-        records=5000
-):
+class CustomerGenerator:
 
-    rows=[]
+    def __init__(self, context: GenerationContext):
 
-    occupations=OCCUPATIONS["occupations"]
+        self.context = context
 
-    cities=CITIES["cities"]
+    ###############################################################
 
-    for _ in range(records):
+    @staticmethod
+    def generate_pan():
 
-        cid=customer_id()
-
-        context.customer_ids.append(cid)
-
-        city=random.choice(cities)
-
-        pan=''.join(random.choices(string.ascii_uppercase,k=5)) + \
-            ''.join(random.choices(string.digits,k=4)) + \
-            random.choice(string.ascii_uppercase)
-
-        aadhaar="".join(
-            random.choices(
-                string.digits,
-                k=12
-            )
+        return (
+            "".join(random.choices(string.ascii_uppercase, k=5))
+            + "".join(random.choices(string.digits, k=4))
+            + random.choice(string.ascii_uppercase)
         )
 
-        rows.append({
+    ###############################################################
 
-            "customer_id":cid,
+    @staticmethod
+    def generate_aadhaar():
 
-            "branch_id":random.choice(
-                context.branch_ids
-            ),
+        return "".join(random.choices(string.digits, k=12))
 
-            "first_name":fake.first_name(),
+    ###############################################################
 
-            "last_name":fake.last_name(),
+    def generate(self):
 
-            "gender":random.choice([
-                "Male",
-                "Female"
-            ]),
+        rows = []
 
-            "dob":fake.date_of_birth(
-                minimum_age=18,
-                maximum_age=80
-            ),
+        customers = SIMULATION["master"]["customers"]
 
-            "mobile_number":"9"+''.join(
-                random.choices(
-                    string.digits,
-                    k=9
-                )
-            ),
+        branches = self.context.branch_df
 
-            "email":fake.email(),
+        occupations = OCCUPATIONS["occupations"]
 
-            "pan_number":pan,
+        cities = CITIES["cities"]
 
-            "aadhaar_number":aadhaar,
+        for _ in range(customers):
 
-            "occupation":random.choice(
-                occupations
-            ),
+            branch = branches.sample(1).iloc[0]
 
-            "annual_income":random.randint(
-                300000,
-                3000000
-            ),
+            city = random.choice(cities)
 
-            "city":city["city"],
+            rows.append({
 
-            "state":city["state"],
+                "customer_id": customer_id(),
 
-            "status":"ACTIVE"
+                "branch_id": branch.branch_id,
 
-        })
+                "first_name": fake.first_name(),
 
-    df=pd.DataFrame(rows)
+                "last_name": fake.last_name(),
 
-    context.customer_df=df
+                "gender": random.choice(
+                    [
+                        "Male",
+                        "Female"
+                    ]
+                ),
 
-    return df
+                "dob": fake.date_of_birth(
+                    minimum_age=18,
+                    maximum_age=80
+                ),
+
+                "mobile_number": (
+                    "9"
+                    + "".join(
+                        random.choices(
+                            string.digits,
+                            k=9
+                        )
+                    )
+                ),
+
+                "email": fake.email(),
+
+                "pan_number": self.generate_pan(),
+
+                "aadhaar_number": self.generate_aadhaar(),
+
+                "occupation": random.choice(
+                    occupations
+                ),
+
+                "annual_income": random.randint(
+                    250000,
+                    5000000
+                ),
+
+                "city": city["city"],
+
+                "state": city["state"],
+
+                "customer_status": random.choices(
+                    [
+                        "ACTIVE",
+                        "INACTIVE",
+                        "BLOCKED"
+                    ],
+                    weights=[
+                        92,
+                        6,
+                        2
+                    ]
+                )[0]
+
+            })
+
+        dataframe = pd.DataFrame(rows)
+
+        self.context.customer_df = dataframe
+
+        self.context.customer_lookup = {
+
+            row.customer_id: row
+
+            for _, row in dataframe.iterrows()
+
+        }
+
+        return dataframe

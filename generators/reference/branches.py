@@ -1,7 +1,21 @@
-from pathlib import Path
-import yaml
+"""
+Branch Reference Data
+"""
 
-ROOT = Path(__file__).resolve().parents[2]
+BRANCH_TYPES = [
 
-with open(ROOT / "config/reference/branches.yml") as f:
-    BRANCHES = yaml.safe_load(f)
+    "Urban",
+    "Metro",
+    "Semi Urban",
+    "Rural"
+
+]
+
+REGIONS = [
+
+    "North",
+    "South",
+    "East",
+    "West"
+
+]

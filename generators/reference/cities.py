@@ -1,7 +1,39 @@
-from pathlib import Path
-import yaml
+"""
+Major Indian Cities
+"""
 
-ROOT = Path(__file__).resolve().parents[2]
+CITIES = [
+    "Mumbai",
+    "Delhi",
+    "Chennai",
+    "Bengaluru",
+    "Hyderabad",
+    "Pune",
+    "Kolkata",
+    "Ahmedabad",
+    "Jaipur",
+    "Lucknow",
+    "Coimbatore",
+    "Kochi",
+    "Nagpur",
+    "Indore",
+    "Surat"
+]
 
-with open(ROOT / "config/reference/cities.yml") as f:
-    CITIES = yaml.safe_load(f)
+STATES = {
+    "Mumbai": "Maharashtra",
+    "Delhi": "Delhi",
+    "Chennai": "Tamil Nadu",
+    "Bengaluru": "Karnataka",
+    "Hyderabad": "Telangana",
+    "Pune": "Maharashtra",
+    "Kolkata": "West Bengal",
+    "Ahmedabad": "Gujarat",
+    "Jaipur": "Rajasthan",
+    "Lucknow": "Uttar Pradesh",
+    "Coimbatore": "Tamil Nadu",
+    "Kochi": "Kerala",
+    "Nagpur": "Maharashtra",
+    "Indore": "Madhya Pradesh",
+    "Surat": "Gujarat"
+}

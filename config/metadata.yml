@@ -1,99 +1,29 @@
 branches:
-
-  generator: branch_generator
-
-  frequency: daily
-
-  records: 50
-
-  landing_folder: branches
+  count: 10
 
 customers:
-
-  generator: customer_generator
-
-  frequency: daily
-
-  records: 1000
-
-  landing_folder: customers
+  count: 50
 
 accounts:
-
-  generator: account_generator
-
-  frequency: daily
-
-  records: 1500
-
-  landing_folder: accounts
+  count: 75
 
 cards:
-
-  generator: card_generator
-
-  frequency: daily
-
-  records: 1200
-
-  landing_folder: cards
+  count: 60
 
 loans:
-
-  generator: loan_generator
-
-  frequency: daily
-
-  records: 500
-
-  landing_folder: loans
+  count: 15
 
 customer_kyc:
-
-  generator: kyc_generator
-
-  frequency: daily
-
-  records: 1000
-
-  landing_folder: customer_kyc
+  count: 50
 
 exchange_rates:
-
-  generator: exchange_rate_generator
-
-  frequency: daily
-
-  records: 25
-
-  landing_folder: exchange_rates
+  count: 8
 
 transactions:
-
-  generator: transaction_generator
-
-  frequency: 5min
-
-  records: 500
-
-  landing_folder: transactions
+  batch_size: 100
 
 atm_transactions:
-
-  generator: atm_generator
-
-  frequency: 5min
-
-  records: 300
-
-  landing_folder: atm_transactions
+  batch_size: 30
 
 login_activity:
-
-  generator: login_generator
-
-  frequency: 1min
-
-  records: 200
-
-  landing_folder: login_activity
+  batch_size: 40
