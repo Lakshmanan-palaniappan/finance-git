@@ -1,23 +1,21 @@
 """
 Azure Data Lake Storage Utility
 
-Supports
+Authentication:
+Service Principal
 
-1. Interactive Browser
-2. Azure CLI
-3. Managed Identity
+Works for:
+- Local Development
+- Azure VM
+- CI/CD
 
-No code changes required between environments.
+Later we'll switch to Managed Identity in Databricks.
 """
 
 from pathlib import Path
 import io
 
-from azure.identity import (
-    InteractiveBrowserCredential,
-    AzureCliCredential,
-    DefaultAzureCredential,
-)
+from azure.identity import ClientSecretCredential
 
 from azure.storage.filedatalake import (
     DataLakeServiceClient,
@@ -26,43 +24,12 @@ from azure.storage.filedatalake import (
 from generators.common.config import (
     AZURE_STORAGE_ACCOUNT,
     AZURE_CONTAINER,
-    AUTH_MODE,
+    AZURE_TENANT_ID,
+    AZURE_CLIENT_ID,
+    AZURE_CLIENT_SECRET,
 )
 
 from generators.common.logger import logger
-
-
-def get_credential():
-
-    if AUTH_MODE.lower() == "browser":
-
-        logger.info(
-            "Using InteractiveBrowserCredential"
-        )
-
-        return InteractiveBrowserCredential()
-
-    elif AUTH_MODE.lower() == "azure_cli":
-
-        logger.info(
-            "Using AzureCliCredential"
-        )
-
-        return AzureCliCredential()
-
-    elif AUTH_MODE.lower() == "managed_identity":
-
-        logger.info(
-            "Using DefaultAzureCredential"
-        )
-
-        return DefaultAzureCredential()
-
-    else:
-
-        raise ValueError(
-            f"Unsupported auth mode : {AUTH_MODE}"
-        )
 
 
 class ADLSStorage:
@@ -73,32 +40,35 @@ class ADLSStorage:
 
         self.container_name = AZURE_CONTAINER
 
-        self.credential = get_credential()
+        self.credential = ClientSecretCredential(
+
+            tenant_id=AZURE_TENANT_ID,
+
+            client_id=AZURE_CLIENT_ID,
+
+            client_secret=AZURE_CLIENT_SECRET
+
+        )
 
         self.service_client = DataLakeServiceClient(
 
             account_url=(
-                f"https://"
-                f"{self.account_name}"
-                f".dfs.core.windows.net"
+                f"https://{self.account_name}.dfs.core.windows.net"
             ),
 
             credential=self.credential
 
         )
 
-        self.file_system = (
-            self.service_client.get_file_system_client(
-                self.container_name
-            )
+        self.file_system = self.service_client.get_file_system_client(
+            self.container_name
         )
 
         logger.info(
-            f"Connected to ADLS container : "
-            f"{self.container_name}"
+            f"Connected to ADLS Container: {self.container_name}"
         )
 
-    ##########################################################
+    ##################################################################
 
     def create_directory(self, directory):
 
@@ -106,11 +76,15 @@ class ADLSStorage:
 
             self.file_system.create_directory(directory)
 
+            logger.info(
+                f"Created directory: {directory}"
+            )
+
         except Exception:
 
             pass
 
-    ##########################################################
+    ##################################################################
 
     def upload(self, local_file, remote_path):
 
@@ -132,12 +106,12 @@ class ADLSStorage:
             )
 
         logger.info(
-            f"Uploaded {local_file.name}"
+            f"Uploaded {local_file.name} -> {remote_path}"
         )
 
         return remote_path
 
-    ##########################################################
+    ##################################################################
 
     def upload_dataframe(
         self,
@@ -166,11 +140,10 @@ class ADLSStorage:
         )
 
         logger.info(
-            f"Uploaded dataframe -> "
-            f"{remote_path}"
+            f"Uploaded dataframe -> {remote_path}"
         )
 
-    ##########################################################
+    ##################################################################
 
     def download(
         self,
@@ -191,21 +164,14 @@ class ADLSStorage:
 
         with open(local_file, "wb") as file:
 
-            file.write(
-                download.readall()
-            )
+            file.write(download.readall())
 
-    ##########################################################
+    ##################################################################
 
-    def delete(self, remote_path):
-
-        self.file_system.delete_file(
-            remote_path
-        )
-
-    ##########################################################
-
-    def exists(self, remote_path):
+    def exists(
+        self,
+        remote_path
+    ):
 
         try:
 
@@ -219,15 +185,55 @@ class ADLSStorage:
 
             return False
 
-    ##########################################################
+    ##################################################################
 
-    def list_files(self, directory=""):
+    def delete(
+        self,
+        remote_path
+    ):
+
+        self.file_system.delete_file(
+            remote_path
+        )
+
+        logger.info(
+            f"Deleted: {remote_path}"
+        )
+
+    ##################################################################
+
+    def list_files(
+        self,
+        directory=""
+    ):
 
         paths = self.file_system.get_paths(
             path=directory
         )
 
-        return [
-            path.name
-            for path in paths
-        ]
+        return [path.name for path in paths]
+
+    ##################################################################
+
+    def upload_text(
+        self,
+        text,
+        remote_path
+    ):
+
+        self.create_directory(
+            str(Path(remote_path).parent)
+        )
+
+        file_client = self.file_system.get_file_client(
+            remote_path
+        )
+
+        file_client.upload_data(
+            text,
+            overwrite=True
+        )
+
+        logger.info(
+            f"Uploaded text -> {remote_path}"
+        )
