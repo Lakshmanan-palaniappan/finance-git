@@ -46,26 +46,26 @@ with open(CONFIG_DIR / "metadata.yml", "r") as file:
 # Project
 # ---------------------------------------------------------------------
 
-PROJECT = ENVIRONMENT.get("project", {})
+PROJECT = ENVIRONMENT.get(
+    "project",
+    {}
+)
 
 # ---------------------------------------------------------------------
 # Azure
 # ---------------------------------------------------------------------
 
-AZURE = ENVIRONMENT.get("azure", {})
+AZURE = ENVIRONMENT.get(
+    "azure",
+    {}
+)
 
-AZURE_STORAGE_ACCOUNT = AZURE.get("storage_account")
+AZURE_STORAGE_ACCOUNT = AZURE["storage_account"]
 
-AZURE_CONTAINER = AZURE.get("container")
-
-if not AZURE_STORAGE_ACCOUNT:
-    raise ValueError("storage_account missing in environment.yml")
-
-if not AZURE_CONTAINER:
-    raise ValueError("container missing in environment.yml")
+AZURE_CONTAINER = AZURE["container"]
 
 # ---------------------------------------------------------------------
-# Authentication (.env)
+# Authentication
 # ---------------------------------------------------------------------
 
 AZURE_TENANT_ID = os.getenv("AZURE_TENANT_ID")
@@ -92,6 +92,14 @@ PATHS = ENVIRONMENT.get(
     {}
 )
 
+LANDING_PATH = PATHS["landing"]
+
+MASTER_PATH = PATHS["master"]
+
+CDC_PATH = PATHS["cdc"]
+
+STREAMING_PATH = PATHS["streaming"]
+
 # ---------------------------------------------------------------------
 # Datasets
 # ---------------------------------------------------------------------
@@ -111,6 +119,24 @@ SIMULATION = ENVIRONMENT.get(
 )
 
 # ---------------------------------------------------------------------
+# Monitoring
+# ---------------------------------------------------------------------
+
+MONITORING = ENVIRONMENT.get(
+    "monitoring",
+    {}
+)
+
+# ---------------------------------------------------------------------
+# Settings
+# ---------------------------------------------------------------------
+
+SETTINGS = ENVIRONMENT.get(
+    "settings",
+    {}
+)
+
+# ---------------------------------------------------------------------
 # Metadata
 # ---------------------------------------------------------------------
 
@@ -126,8 +152,11 @@ SCHEMAS = METADATA.get(
 OUTPUT_DIRECTORY = Path(
 
     os.getenv(
+
         "OUTPUT_DIRECTORY",
+
         ROOT_DIR / "output"
+
     )
 
 )
@@ -135,8 +164,11 @@ OUTPUT_DIRECTORY = Path(
 TEMP_DIRECTORY = Path(
 
     os.getenv(
+
         "TEMP_DIRECTORY",
+
         ROOT_DIR / "temp"
+
     )
 
 )
@@ -144,8 +176,11 @@ TEMP_DIRECTORY = Path(
 ARCHIVE_DIRECTORY = Path(
 
     os.getenv(
+
         "ARCHIVE_DIRECTORY",
+
         ROOT_DIR / "archive"
+
     )
 
 )
@@ -154,12 +189,21 @@ ARCHIVE_DIRECTORY = Path(
 # Logging
 # ---------------------------------------------------------------------
 
-LOG_LEVEL = os.getenv(
-    "LOG_LEVEL",
-    "INFO"
+LOG_LEVEL = SETTINGS.get(
+
+    "log_level",
+
+    os.getenv(
+        "LOG_LEVEL",
+        "INFO"
+    )
+
 )
 
 ENV = os.getenv(
+
     "ENV",
+
     "local"
+
 )
