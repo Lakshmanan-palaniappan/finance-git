@@ -1,6 +1,6 @@
 # Transaction Schema
 
-## Purpose
+## Description
 
 Streaming banking transactions.
 
@@ -12,34 +12,25 @@ Every 2 Minutes
 
 Streaming
 
-## Columns
+## Primary Key
 
 transaction_id
 
+## Foreign Key
+
 account_id
 
-transaction_timestamp
+## Columns
 
-transaction_type
-
-amount
-
-currency
-
-merchant_id
-
-channel
-
-branch_id
-
-status
-
----
-
-Validation
-
-Amount > 0
-
-Account Exists
-
-Timestamp Mandatory
+| Column | Data Type |
+|----------|-----------|
+| transaction_id | STRING |
+| account_id | STRING |
+| transaction_timestamp | TIMESTAMP |
+| transaction_type | STRING |
+| amount | DECIMAL(18,2) |
+| currency | STRING |
+| merchant_id | STRING |
+| channel | STRING |
+| branch_id | STRING |
+| transaction_status | STRING |

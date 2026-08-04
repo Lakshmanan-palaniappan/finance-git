@@ -1,10 +1,10 @@
 # Customer Schema
 
-## Purpose
+## Description
 
-Stores customer master information.
+Stores master information for bank customers.
 
-## Source
+## Source System
 
 Customer Management System
 
@@ -15,41 +15,33 @@ Daily
 ## Processing
 
 Batch
-
 CDC
-
 SCD Type 2
+
+---
+
+## Primary Key
+
+customer_id
 
 ---
 
 ## Columns
 
-| Column | Type | Nullable | Description |
-|----------|------|----------|-------------|
-| customer_id | STRING | No | Customer Identifier |
-| first_name | STRING | No | Customer First Name |
-| last_name | STRING | No | Customer Last Name |
-| dob | DATE | No | Date of Birth |
-| gender | STRING | Yes | Gender |
-| email | STRING | Yes | Email |
-| phone | STRING | No | Phone Number |
-| pan | STRING | No | PAN Number |
-| aadhaar | STRING | No | Aadhaar Number |
-| occupation | STRING | Yes | Occupation |
-| annual_income | DECIMAL | Yes | Annual Income |
-| branch_id | STRING | No | Home Branch |
-| customer_status | STRING | No | Active/Inactive |
-| created_date | TIMESTAMP | No | Created Timestamp |
-| updated_date | TIMESTAMP | No | Updated Timestamp |
-
----
-
-## Validation
-
-Customer ID Unique
-
-PAN Unique
-
-Aadhaar Unique
-
-Age > 18
+| Column | Data Type | Nullable | Validation |
+|----------|-----------|----------|------------|
+| customer_id | STRING | No | Unique |
+| first_name | STRING | No | Required |
+| last_name | STRING | No | Required |
+| date_of_birth | DATE | No | Age >= 18 |
+| gender | STRING | Yes | M/F/O |
+| email | STRING | Yes | Valid email |
+| phone | STRING | No | 10 digits |
+| pan | STRING | No | Unique |
+| aadhaar | STRING | No | 12 digits |
+| occupation | STRING | Yes | Optional |
+| annual_income | DECIMAL(15,2) | Yes | >=0 |
+| branch_id | STRING | No | Must exist |
+| customer_status | STRING | No | ACTIVE / INACTIVE |
+| created_timestamp | TIMESTAMP | No | System Generated |
+| updated_timestamp | TIMESTAMP | No | System Generated |
