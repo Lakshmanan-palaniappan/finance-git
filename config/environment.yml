@@ -4,7 +4,7 @@ project:
 
 azure:
 
-  auth_mode: azure_cli
+  auth_mode: browser
 
   storage_account: bankingstorageacc
 

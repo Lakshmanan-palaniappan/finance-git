@@ -41,13 +41,18 @@ SIMULATION = ENVIRONMENT["simulation"]
 MONITORING = ENVIRONMENT["monitoring"]
 
 
+# ---------------------------------------------------------------------
+# Azure
+# ---------------------------------------------------------------------
+
 AZURE_STORAGE_ACCOUNT = AZURE["storage_account"]
 
 AZURE_CONTAINER = AZURE["container"]
 
-AUTH_MODE = AZURE["auth_mode"]
-
-
+AUTH_MODE = AZURE.get(
+    "auth_mode",
+    "browser"
+)
 ENV = os.getenv("ENV", "local")
 
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
