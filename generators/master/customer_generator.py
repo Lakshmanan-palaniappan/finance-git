@@ -46,15 +46,29 @@ class CustomerGenerator:
 
         rows = []
 
-        customers = SIMULATION["master"]["customers"]
+        number_of_customers = SIMULATION["master"]["customers"]
+
+        income_config = SIMULATION["master"].get(
+            "customer_income",
+            {
+                "minimum": 250000,
+                "maximum": 5000000
+            }
+        )
 
         branches = self.context.branch_df
+
+        if branches.empty:
+
+            raise ValueError(
+                "Branch data is empty. Run BranchGenerator before CustomerGenerator."
+            )
 
         occupations = OCCUPATIONS["occupations"]
 
         cities = CITIES["cities"]
 
-        for _ in range(customers):
+        for _ in range(number_of_customers):
 
             branch = branches.sample(1).iloc[0]
 
@@ -70,12 +84,16 @@ class CustomerGenerator:
 
                 "last_name": fake.last_name(),
 
-                "gender": random.choice(
+                "gender": random.choices(
                     [
                         "Male",
                         "Female"
+                    ],
+                    weights=[
+                        51,
+                        49
                     ]
-                ),
+                )[0],
 
                 "dob": fake.date_of_birth(
                     minimum_age=18,
@@ -103,8 +121,8 @@ class CustomerGenerator:
                 ),
 
                 "annual_income": random.randint(
-                    250000,
-                    5000000
+                    income_config["minimum"],
+                    income_config["maximum"]
                 ),
 
                 "city": city["city"],

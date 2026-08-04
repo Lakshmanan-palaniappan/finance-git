@@ -39,6 +39,14 @@ class BankingSimulator:
         dataframe
     ):
 
+        if dataframe.empty:
+
+            logger.warning(
+                f"{dataset_name} generated no records."
+            )
+
+            return
+
         logger.info(
             f"Publishing {dataset_name}"
         )
@@ -97,67 +105,99 @@ class BankingSimulator:
 
         for dataset_name, generator in datasets:
 
-            dataframe = generator.generate()
+            try:
 
-            self.publish_dataset(
-                dataset_name,
-                dataframe
-            )
+                dataframe = generator.generate()
+
+                self.publish_dataset(
+                    dataset_name,
+                    dataframe
+                )
+
+            except Exception:
+
+                logger.exception(
+                    f"Failed generating {dataset_name}"
+                )
 
         logger.info(
-            "Master Data Completed."
+            "Master Data Generation Completed."
         )
 
     ###############################################################
 
     def transaction_job(self):
 
-        logger.info(
-            "Generating Transactions..."
-        )
+        try:
 
-        dataframe = TransactionGenerator(
-            self.context
-        ).generate()
+            logger.info(
+                "Generating Transactions..."
+            )
 
-        self.publish_dataset(
-            "transactions",
-            dataframe
-        )
+            dataframe = TransactionGenerator(
+                self.context
+            ).generate()
+
+            self.publish_dataset(
+                "transactions",
+                dataframe
+            )
+
+        except Exception:
+
+            logger.exception(
+                "Transaction generation failed."
+            )
 
     ###############################################################
 
     def atm_job(self):
 
-        logger.info(
-            "Generating ATM Transactions..."
-        )
+        try:
 
-        dataframe = ATMGenerator(
-            self.context
-        ).generate()
+            logger.info(
+                "Generating ATM Transactions..."
+            )
 
-        self.publish_dataset(
-            "atm_transactions",
-            dataframe
-        )
+            dataframe = ATMGenerator(
+                self.context
+            ).generate()
+
+            self.publish_dataset(
+                "atm_transactions",
+                dataframe
+            )
+
+        except Exception:
+
+            logger.exception(
+                "ATM transaction generation failed."
+            )
 
     ###############################################################
 
     def login_job(self):
 
-        logger.info(
-            "Generating Login Activity..."
-        )
+        try:
 
-        dataframe = LoginGenerator(
-            self.context
-        ).generate()
+            logger.info(
+                "Generating Login Activity..."
+            )
 
-        self.publish_dataset(
-            "login_activity",
-            dataframe
-        )
+            dataframe = LoginGenerator(
+                self.context
+            ).generate()
+
+            self.publish_dataset(
+                "login_activity",
+                dataframe
+            )
+
+        except Exception:
+
+            logger.exception(
+                "Login activity generation failed."
+            )
 
     ###############################################################
 
@@ -186,11 +226,19 @@ class BankingSimulator:
         )
 
         logger.info(
-            "Simulator Started..."
+            "Enterprise Banking Simulator Started."
         )
 
-        while True:
+        try:
 
-            schedule.run_pending()
+            while True:
 
-            time.sleep(1)
+                schedule.run_pending()
+
+                time.sleep(1)
+
+        except KeyboardInterrupt:
+
+            logger.info(
+                "Simulator stopped by user."
+            )

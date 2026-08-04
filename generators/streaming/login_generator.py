@@ -8,6 +8,7 @@ from datetime import datetime
 import pandas as pd
 
 from generators.common.context import GenerationContext
+from generators.common.config import SIMULATION
 from generators.common.id_generator import login_id
 
 
@@ -46,7 +47,11 @@ class LoginGenerator:
     ###############################################################
 
     @staticmethod
-    def calculate_risk(status, failed_count, new_device):
+    def calculate_risk(
+        status,
+        failed_count,
+        new_device
+    ):
 
         score = 0
 
@@ -68,9 +73,26 @@ class LoginGenerator:
 
         customers = self.context.customer_df
 
+        if customers.empty:
+
+            raise ValueError(
+                "Customer data is empty. Run CustomerGenerator before LoginGenerator."
+            )
+
+        streaming = SIMULATION["streaming"]
+
+        batch_size = streaming["login_batch_size"]
+
+        failed_probability = streaming["failed_login_probability"]
+
+        new_device_probability = streaming.get(
+            "new_device_probability",
+            0.15
+        )
+
         sample_size = min(
             len(customers),
-            300
+            batch_size
         )
 
         sampled = customers.sample(sample_size)
@@ -80,14 +102,14 @@ class LoginGenerator:
             status = random.choices(
 
                 [
-
                     "SUCCESS",
-
                     "FAILED"
-
                 ],
 
-                weights=[92, 8]
+                weights=[
+                    1 - failed_probability,
+                    failed_probability
+                ]
 
             )[0]
 
@@ -100,7 +122,10 @@ class LoginGenerator:
                     5
                 )
 
-            new_device = random.random() < 0.15
+            new_device = (
+                random.random()
+                < new_device_probability
+            )
 
             risk_score = self.calculate_risk(
 
@@ -114,43 +139,36 @@ class LoginGenerator:
 
             rows.append({
 
-                "login_id":
-                    login_id(),
+                "login_id": login_id(),
 
-                "customer_id":
-                    customer.customer_id,
+                "customer_id": customer.customer_id,
 
-                "device":
-                    random.choice(
-                        DEVICES
-                    ),
+                "device": random.choice(
+                    DEVICES
+                ),
 
-                "browser":
-                    random.choice(
-                        BROWSERS
-                    ),
+                "browser": random.choice(
+                    BROWSERS
+                ),
 
-                "ip_address":
-                    self.generate_ip(),
+                "ip_address": self.generate_ip(),
 
-                "city":
-                    customer.city,
+                "city": customer.city,
 
-                "status":
-                    status,
+                "status": status,
 
-                "failed_login_count":
-                    failed_count,
+                "failed_login_count": failed_count,
 
-                "new_device":
-                    new_device,
+                "new_device": new_device,
 
-                "risk_score":
-                    risk_score,
+                "risk_score": risk_score,
 
-                "login_timestamp":
-                    datetime.now()
+                "login_timestamp": datetime.now()
 
             })
 
-        return pd.DataFrame(rows)
+        dataframe = pd.DataFrame(rows)
+
+        self.context.login_activity_df = dataframe
+
+        return dataframe

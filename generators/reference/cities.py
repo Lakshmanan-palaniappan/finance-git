@@ -1,39 +1,21 @@
 """
-Major Indian Cities
+City Reference Loader
 """
 
-CITIES = [
-    "Mumbai",
-    "Delhi",
-    "Chennai",
-    "Bengaluru",
-    "Hyderabad",
-    "Pune",
-    "Kolkata",
-    "Ahmedabad",
-    "Jaipur",
-    "Lucknow",
-    "Coimbatore",
-    "Kochi",
-    "Nagpur",
-    "Indore",
-    "Surat"
-]
+from pathlib import Path
 
-STATES = {
-    "Mumbai": "Maharashtra",
-    "Delhi": "Delhi",
-    "Chennai": "Tamil Nadu",
-    "Bengaluru": "Karnataka",
-    "Hyderabad": "Telangana",
-    "Pune": "Maharashtra",
-    "Kolkata": "West Bengal",
-    "Ahmedabad": "Gujarat",
-    "Jaipur": "Rajasthan",
-    "Lucknow": "Uttar Pradesh",
-    "Coimbatore": "Tamil Nadu",
-    "Kochi": "Kerala",
-    "Nagpur": "Maharashtra",
-    "Indore": "Madhya Pradesh",
-    "Surat": "Gujarat"
-}
+import yaml
+
+REFERENCE_DIR = (
+    Path(__file__).resolve().parents[2]
+    / "config"
+    / "reference"
+)
+
+with open(
+    REFERENCE_DIR / "cities.yml",
+    "r",
+    encoding="utf-8"
+) as file:
+
+    CITIES = yaml.safe_load(file)

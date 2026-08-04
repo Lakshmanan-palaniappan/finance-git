@@ -1,5 +1,5 @@
 """
-Card Rules Loader
+Exchange Rate Reference Loader
 """
 
 from pathlib import Path
@@ -13,9 +13,9 @@ REFERENCE_DIR = (
 )
 
 with open(
-    REFERENCE_DIR / "card_rules.yml",
+    REFERENCE_DIR / "exchange_rates.yml",
     "r",
     encoding="utf-8"
 ) as file:
 
-    CARD_RULES = yaml.safe_load(file)
+    EXCHANGE_RATES = yaml.safe_load(file)

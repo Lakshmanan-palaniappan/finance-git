@@ -27,11 +27,24 @@ class KYCGenerator:
 
     ###############################################################
 
+    @staticmethod
+    def generate_employee_id():
+
+        return f"EMP{random.randint(1000, 9999)}"
+
+    ###############################################################
+
     def generate(self):
 
         rows = []
 
         customers = self.context.customer_df
+
+        if customers.empty:
+
+            raise ValueError(
+                "Customer data is empty. Run CustomerGenerator before KYCGenerator."
+            )
 
         for _, customer in customers.iterrows():
 
@@ -51,6 +64,21 @@ class KYCGenerator:
 
             )[0]
 
+            verification_date = (
+
+                date.today()
+
+                - timedelta(
+
+                    days=random.randint(
+                        1,
+                        365
+                    )
+
+                )
+
+            )
+
             rows.append({
 
                 "kyc_id": kyc_id(),
@@ -63,25 +91,11 @@ class KYCGenerator:
 
                 "pan_number": customer.pan_number,
 
-                "aadhaar_number":
-                    customer.aadhaar_number,
+                "aadhaar_number": customer.aadhaar_number,
 
-                "verification_date":
+                "verification_date": verification_date,
 
-                    date.today()
-
-                    - timedelta(
-
-                        days=random.randint(
-                            1,
-                            365
-                        )
-
-                    ),
-
-                "verified_by":
-
-                    f"EMP{random.randint(1000,9999)}",
+                "verified_by": self.generate_employee_id(),
 
                 "status": status
 

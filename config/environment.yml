@@ -4,8 +4,6 @@ project:
 
 azure:
 
-  auth_mode: browser
-
   storage_account: bankingstorageacc
 
   container: finance-dev
@@ -46,9 +44,37 @@ simulation:
 
   master:
 
-    branches: 50
+    branches: 25
 
-    customers: 5000
+    customers: 500
+
+    customer_income:
+
+      minimum: 250000
+
+      maximum: 5000000
+
+    account_balance:
+
+      maximum: 2500000
+
+    credit_card_income: 700000
+
+    loan:
+
+      income_probability:
+
+        default: 0.15
+
+        medium: 0.30
+
+        high: 0.50
+
+      interest_rate:
+
+        minimum: 7.50
+
+        maximum: 12.50
 
   streaming:
 
@@ -63,6 +89,26 @@ simulation:
     atm_batch_size: 200
 
     login_batch_size: 300
+
+    fraud_probability: 0.02
+
+    failed_login_probability: 0.08
+
+    new_device_probability: 0.15
+
+    high_value_transaction: 100000
+
+    atm_high_value: 10000
+
+    atm:
+
+      minimum_amount: 100
+
+      maximum_amount: 20000
+
+  exchange_rates:
+
+    refresh_days: 1
 
 monitoring:
 
@@ -173,3 +219,19 @@ datasets:
     format: csv
 
     compression: none
+
+settings:
+
+  timezone: Asia/Kolkata
+
+  timestamp_format: "%Y-%m-%d %H:%M:%S"
+
+  output_format: csv
+
+  overwrite_existing_files: true
+
+  upload_to_adls: true
+
+  save_local_copy: true
+
+  log_level: INFO

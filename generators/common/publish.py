@@ -1,55 +1,84 @@
 """
-Publishes datasets.
+Publisher
 
-Local
-↓
-
-ADLS Landing
+Generator
+    ↓
+Local File
+    ↓
+Azure Data Lake Storage
 """
 
 from pathlib import Path
 
+from generators.common.config import (
+    DATASETS,
+    PATHS,
+)
+
 from generators.common.file_writer import FileWriter
 from generators.common.storage import ADLSStorage
 from generators.common.paths import OUTPUT_PATH
-from generators.common.config import PATHS
 from generators.common.logger import logger
 
 
 class Publisher:
 
-    storage = ADLSStorage()
+    def __init__(self):
 
-    @classmethod
-    def publish(cls, dataframe, dataset):
+        self.storage = ADLSStorage()
 
-        folder = OUTPUT_PATH / dataset
+    ##############################################################
 
-        file_path = FileWriter.write(
+    def publish(
+        self,
+        dataframe,
+        dataset_name: str
+    ):
 
-            dataframe,
+        if dataset_name not in DATASETS:
 
-            dataset,
+            raise ValueError(
+                f"{dataset_name} not found in environment.yml datasets."
+            )
 
-            folder
+        dataset = DATASETS[dataset_name]
 
+        folder = dataset["folder"]
+
+        filename_prefix = dataset["filename_prefix"]
+
+        file_format = dataset.get(
+            "format",
+            "csv"
         )
 
-        landing = PATHS["landing"]
+        local_directory = OUTPUT_PATH / folder
+
+        local_file = FileWriter.write(
+
+            dataframe=dataframe,
+
+            dataset=filename_prefix,
+
+            output_directory=local_directory,
+
+            file_format=file_format
+
+        )
 
         remote_path = (
 
-            f"{landing}/"
+            f"{PATHS['landing']}/"
 
-            f"{dataset}/"
+            f"{folder}/"
 
-            f"{Path(file_path).name}"
+            f"{Path(local_file).name}"
 
         )
 
-        cls.storage.upload(
+        self.storage.upload(
 
-            file_path,
+            local_file,
 
             remote_path
 
@@ -57,8 +86,8 @@ class Publisher:
 
         logger.info(
 
-            f"Uploaded {remote_path}"
+            f"{dataset_name} published successfully."
 
         )
 
-        return file_path
+        return local_file

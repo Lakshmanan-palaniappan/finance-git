@@ -8,6 +8,7 @@ from datetime import datetime
 import pandas as pd
 
 from generators.common.context import GenerationContext
+from generators.common.config import SIMULATION
 from generators.common.id_generator import atm_transaction_id
 
 
@@ -22,7 +23,7 @@ class ATMGenerator:
     @staticmethod
     def generate_atm_id():
 
-        return f"ATM{random.randint(10000,99999)}"
+        return f"ATM{random.randint(10000, 99999)}"
 
     ###############################################################
 
@@ -34,6 +35,18 @@ class ATMGenerator:
 
         card_df = self.context.card_df
 
+        if account_df.empty:
+
+            raise ValueError(
+                "Account data is empty. Run AccountGenerator before ATMGenerator."
+            )
+
+        if card_df.empty:
+
+            raise ValueError(
+                "Card data is empty. Run CardGenerator before ATMGenerator."
+            )
+
         debit_cards = card_df[
             card_df.card_type == "Debit"
         ]
@@ -42,9 +55,18 @@ class ATMGenerator:
 
             return pd.DataFrame()
 
+        streaming = SIMULATION["streaming"]
+
+        batch_size = streaming["atm_batch_size"]
+
+        fraud_threshold = streaming["atm_high_value"]
+
         sample_size = min(
+
             len(debit_cards),
-            200
+
+            batch_size
+
         )
 
         sampled_cards = debit_cards.sample(sample_size)
@@ -56,6 +78,7 @@ class ATMGenerator:
             ].index
 
             if len(account_index) == 0:
+
                 continue
 
             idx = account_index[0]
@@ -82,12 +105,6 @@ class ATMGenerator:
                 amount = 0
 
             account_df.at[idx, "balance"] = balance
-
-            fraud_flag = False
-
-            if amount >= 10000:
-
-                fraud_flag = True
 
             rows.append({
 
@@ -116,7 +133,7 @@ class ATMGenerator:
                     status,
 
                 "fraud_flag":
-                    fraud_flag,
+                    amount >= fraud_threshold,
 
                 "transaction_timestamp":
                     datetime.now()

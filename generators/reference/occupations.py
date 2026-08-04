@@ -1,28 +1,21 @@
 """
-Customer Occupations
+Occupation Reference Loader
 """
 
-OCCUPATIONS = [
+from pathlib import Path
 
-    "Software Engineer",
-    "Doctor",
-    "Teacher",
-    "Lawyer",
-    "Accountant",
-    "Business Owner",
-    "Government Employee",
-    "Farmer",
-    "Student",
-    "Retired",
-    "Consultant",
-    "Sales Executive",
-    "Marketing Manager",
-    "Architect",
-    "Mechanical Engineer",
-    "Civil Engineer",
-    "Electrician",
-    "Nurse",
-    "Police Officer",
-    "Professor"
+import yaml
 
-]
+REFERENCE_DIR = (
+    Path(__file__).resolve().parents[2]
+    / "config"
+    / "reference"
+)
+
+with open(
+    REFERENCE_DIR / "occupations.yml",
+    "r",
+    encoding="utf-8"
+) as file:
+
+    OCCUPATIONS = yaml.safe_load(file)
