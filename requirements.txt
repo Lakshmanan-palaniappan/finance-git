@@ -1,0 +1,6 @@
+faker==37.*
+pandas==2.*
+pyarrow==25.*
+azure-storage-file-datalake
+azure-identity
+python-dotenv
