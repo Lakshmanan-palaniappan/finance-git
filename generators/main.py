@@ -1,6 +1,17 @@
+"""
+Application Entry Point
+"""
+
+from generators.simulator import BankingSimulator
+
+
 def main():
-    print("Enterprise Banking Simulator")
+
+    simulator = BankingSimulator()
+
+    simulator.start()
 
 
 if __name__ == "__main__":
+
     main()

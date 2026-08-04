@@ -1,95 +1,37 @@
 """
-Project-wide constants.
+Project Constants
 """
 
-# -------------------------
-# Batch Sizes
-# -------------------------
+DATE_FORMAT = "%Y-%m-%d"
 
-BRANCH_COUNT = 25
+TIMESTAMP_FORMAT = "%Y-%m-%d %H:%M:%S"
 
-CUSTOMER_COUNT = 500
+CURRENCY = "INR"
 
-ACCOUNT_COUNT = 1000
+COUNTRY = "India"
 
-LOAN_COUNT = 250
+CSV_EXTENSION = ".csv"
 
-CARD_COUNT = 700
+ENCODING = "utf-8"
 
-TRANSACTION_BATCH_SIZE = 500
+OVERWRITE = True
 
-ATM_BATCH_SIZE = 100
+MASTER_DATASETS = [
 
-LOGIN_BATCH_SIZE = 300
+    "branches",
+    "customers",
+    "accounts",
+    "cards",
+    "loans",
+    "customer_kyc",
+    "exchange_rates"
 
-
-# -------------------------
-# Transaction Types
-# -------------------------
-
-TRANSACTION_TYPES = [
-    "DEPOSIT",
-    "WITHDRAWAL",
-    "TRANSFER",
-    "UPI",
-    "NEFT",
-    "RTGS",
-    "IMPS"
 ]
 
+STREAMING_DATASETS = [
 
-ACCOUNT_TYPES = [
-    "SAVINGS",
-    "CURRENT",
-    "SALARY"
-]
+    "transactions",
+    "atm_transactions",
+    "login_activity"
 
-
-CARD_TYPES = [
-    "DEBIT",
-    "CREDIT"
-]
-
-
-CARD_NETWORKS = [
-    "VISA",
-    "MASTERCARD",
-    "RUPAY"
-]
-
-
-LOAN_TYPES = [
-    "HOME",
-    "CAR",
-    "PERSONAL",
-    "EDUCATION"
-]
-
-
-ACCOUNT_STATUS = [
-    "ACTIVE",
-    "INACTIVE"
-]
-
-
-CUSTOMER_STATUS = [
-    "ACTIVE",
-    "INACTIVE"
-]
-
-
-TRANSACTION_STATUS = [
-    "SUCCESS",
-    "FAILED"
-]
-
-
-LOGIN_STATUS = [
-    "SUCCESS",
-    "FAILED"
-]
-
-
-CURRENCY = [
-    "INR"
 ]

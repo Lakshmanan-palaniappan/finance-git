@@ -1,0 +1,175 @@
+project:
+
+  name: enterprise-banking-platform
+
+azure:
+
+  auth_mode: azure_cli
+
+  storage_account: bankingstorageacc
+
+  container: finance-dev
+
+unity_catalog:
+
+  catalog: banking
+
+  bronze_schema: bronze
+
+  silver_schema: silver
+
+  gold_schema: gold
+
+  monitoring_schema: monitoring
+
+paths:
+
+  landing: landing
+
+  bronze: bronze
+
+  silver: silver
+
+  gold: gold
+
+  checkpoints: checkpoints
+
+  schema: schema
+
+  quarantine: quarantine
+
+  archive: archive
+
+  logs: logs
+
+simulation:
+
+  master:
+
+    branches: 50
+
+    customers: 5000
+
+  streaming:
+
+    transaction_interval: 300
+
+    atm_interval: 300
+
+    login_interval: 60
+
+    transaction_batch_size: 500
+
+    atm_batch_size: 200
+
+    login_batch_size: 300
+
+monitoring:
+
+  metrics_folder: monitoring
+
+  audit_folder: audit
+
+  retain_days: 30
+
+datasets:
+
+  branches:
+
+    folder: branches
+
+    filename_prefix: branches
+
+    format: csv
+
+    compression: none
+
+  customers:
+
+    folder: customers
+
+    filename_prefix: customers
+
+    format: csv
+
+    compression: none
+
+  accounts:
+
+    folder: accounts
+
+    filename_prefix: accounts
+
+    format: csv
+
+    compression: none
+
+  cards:
+
+    folder: cards
+
+    filename_prefix: cards
+
+    format: csv
+
+    compression: none
+
+  loans:
+
+    folder: loans
+
+    filename_prefix: loans
+
+    format: csv
+
+    compression: none
+
+  customer_kyc:
+
+    folder: customer_kyc
+
+    filename_prefix: customer_kyc
+
+    format: csv
+
+    compression: none
+
+  exchange_rates:
+
+    folder: exchange_rates
+
+    filename_prefix: exchange_rates
+
+    format: csv
+
+    compression: none
+
+  transactions:
+
+    folder: transactions
+
+    filename_prefix: transactions
+
+    format: csv
+
+    compression: none
+
+  atm_transactions:
+
+    folder: atm_transactions
+
+    filename_prefix: atm_transactions
+
+    format: csv
+
+    compression: none
+
+  login_activity:
+
+    folder: login_activity
+
+    filename_prefix: login_activity
+
+    format: csv
+
+    compression: none

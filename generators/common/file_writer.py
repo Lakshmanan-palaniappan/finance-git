@@ -1,15 +1,44 @@
+"""
+Write generated datasets locally.
+"""
+
 from pathlib import Path
 from datetime import datetime
 
+from generators.common.config import DATASETS
 
-def write_csv(df, folder: Path, prefix: str):
 
-    folder.mkdir(parents=True, exist_ok=True)
+class FileWriter:
 
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    @staticmethod
+    def write(df, dataset, output_directory):
 
-    file_path = folder / f"{prefix}_{timestamp}.csv"
+        Path(output_directory).mkdir(
 
-    df.to_csv(file_path, index=False)
+            parents=True,
 
-    return file_path
+            exist_ok=True
+
+        )
+
+        prefix = DATASETS[dataset]["filename_prefix"]
+
+        filename = (
+
+            f"{prefix}_"
+
+            f"{datetime.now():%Y%m%d_%H%M%S}.csv"
+
+        )
+
+        path = Path(output_directory) / filename
+
+        df.to_csv(
+
+            path,
+
+            index=False
+
+        )
+
+        return str(path)
