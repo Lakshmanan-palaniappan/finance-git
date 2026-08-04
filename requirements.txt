@@ -1,7 +1,10 @@
 faker==37.*
-pandas==2.*
-pyarrow==25.*
-pyspark==4.*
-azure-storage-file-datalake
-azure-identity
+pandas
+pyarrow
+pyyaml
 python-dotenv
+schedule
+azure-identity
+azure-storage-file-datalake
+
+pyspark==4.*

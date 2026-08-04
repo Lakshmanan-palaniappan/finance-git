@@ -1,33 +1,55 @@
+"""
+ID Generator
+"""
+
 import uuid
 
 
+def _generate(prefix: str, length: int):
+
+    return f"{prefix}{uuid.uuid4().hex[:length].upper()}"
+
+
 def customer_id():
-    return f"CUST-{uuid.uuid4().hex[:10].upper()}"
+
+    return _generate("CUST", 10)
 
 
 def account_id():
-    return f"ACC-{uuid.uuid4().hex[:10].upper()}"
+
+    return _generate("ACC", 10)
 
 
 def transaction_id():
-    return f"TXN-{uuid.uuid4().hex[:12].upper()}"
 
-
-def loan_id():
-    return f"LOAN-{uuid.uuid4().hex[:10].upper()}"
+    return _generate("TXN", 12)
 
 
 def card_id():
-    return f"CARD-{uuid.uuid4().hex[:10].upper()}"
+
+    return _generate("CARD", 10)
+
+
+def loan_id():
+
+    return _generate("LOAN", 10)
 
 
 def branch_id():
-    return f"BR-{uuid.uuid4().hex[:6].upper()}"
+
+    return _generate("BR", 6)
+
+
+def kyc_id():
+
+    return _generate("KYC", 10)
 
 
 def atm_transaction_id():
-    return f"ATM-{uuid.uuid4().hex[:10].upper()}"
+
+    return _generate("ATM", 12)
 
 
 def login_id():
-    return f"LOGIN-{uuid.uuid4().hex[:10].upper()}"
+
+    return _generate("LOGIN", 10)
