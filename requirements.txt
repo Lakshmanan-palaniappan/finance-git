@@ -1,6 +1,7 @@
 faker==37.*
 pandas==2.*
 pyarrow==25.*
+pyspark==4.*
 azure-storage-file-datalake
 azure-identity
 python-dotenv
