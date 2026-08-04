@@ -44,15 +44,20 @@ MONITORING = ENVIRONMENT["monitoring"]
 # ---------------------------------------------------------------------
 # Azure
 # ---------------------------------------------------------------------
+# ---------------------------------------------------------------------
+# Azure
+# ---------------------------------------------------------------------
 
 AZURE_STORAGE_ACCOUNT = AZURE["storage_account"]
 
 AZURE_CONTAINER = AZURE["container"]
 
-AUTH_MODE = AZURE.get(
-    "auth_mode",
-    "browser"
-)
+AZURE_TENANT_ID = os.getenv("AZURE_TENANT_ID")
+
+AZURE_CLIENT_ID = os.getenv("AZURE_CLIENT_ID")
+
+AZURE_CLIENT_SECRET = os.getenv("AZURE_CLIENT_SECRET")
+
 ENV = os.getenv("ENV", "local")
 
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
