@@ -2,13 +2,39 @@ project:
 
   name: enterprise-banking-platform
 
+environment:
+
+  name: dev
+
+storage:
+
+  backend: adls              # local | adls | volume
+
+  save_local_copy: true
+
+  local_output_root: output
+
+  archive_root: archive
+
+  temp_root: temp
+
+  file_format: csv
+
 azure:
 
   storage_account: bankingstorageacc
 
   container: finance-dev
 
+  filesystem: finance-dev
+
+  root_folder: finance
+
+  authentication: default
+
 unity_catalog:
+
+  enabled: false
 
   catalog: banking
 
@@ -19,6 +45,8 @@ unity_catalog:
   gold_schema: gold
 
   monitoring_schema: monitoring
+
+  volume: finance_volume
 
 paths:
 
@@ -106,7 +134,7 @@ simulation:
 
     high_value_transaction: 100000
 
-    atm_high_value: 10000
+    atm_high_value: 20000
 
     atm:
 
@@ -256,13 +284,23 @@ datasets:
 
     format: csv
 
+job:
+
+  enabled: true
+
+  default_mode: full
+
+  default_records: 1000
+
+  default_output: adls
+
+  retry_count: 3
+
 settings:
 
   overwrite_existing_files: false
 
   upload_to_adls: true
-
-  save_local_copy: true
 
   output_format: csv
 

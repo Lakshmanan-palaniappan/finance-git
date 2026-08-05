@@ -3,9 +3,12 @@ Publisher
 
 Generator
     ↓
-Local Output
+Publisher
     ↓
-Azure Data Lake Storage
+Storage Backend
+        ├── Local
+        ├── ADLS
+        └── (Future) Unity Catalog Volume
 """
 
 from pathlib import Path
@@ -15,31 +18,48 @@ import pandas as pd
 
 from generators.common.config import (
     DATASETS,
-    PATHS,
-    SETTINGS
+    SETTINGS,
+    dataset_format,
+    dataset_folder,
+    dataset_prefix,
+    dataset_type,
 )
 
 from generators.common.file_writer import FileWriter
-from generators.common.storage import ADLSStorage
+from generators.common.storage import get_storage
 from generators.common.paths import OUTPUT_PATH
 from generators.common.logger import logger
 
 
 class Publisher:
 
-    ###############################################################
+    ###########################################################################
 
     def __init__(self):
 
-        self.storage = ADLSStorage()
+        self.storage = get_storage()
 
-    ###############################################################
+    ###########################################################################
 
     def publish(
         self,
         dataframe: pd.DataFrame,
-        dataset_name: str
+        dataset_name: str,
     ):
+
+        """
+        Publish a generated dataframe.
+
+        Steps
+
+        1. Validate dataframe
+        2. Write locally
+        3. Upload to configured storage backend
+        """
+
+        #######################################################################
+        # Validation
+        #######################################################################
 
         if dataframe is None:
 
@@ -60,99 +80,100 @@ class Publisher:
         if dataset_name not in DATASETS:
 
             raise ValueError(
-                f"{dataset_name} not found in environment.yml."
+                f"{dataset_name} is not configured in environment.yml"
             )
 
-        dataset = DATASETS[dataset_name]
+        #######################################################################
+        # Dataset Configuration
+        #######################################################################
 
-        dataset_type = dataset["type"]
+        layer = dataset_type(dataset_name)
 
-        folder = dataset["folder"]
+        folder = dataset_folder(dataset_name)
 
-        filename = dataset["filename_prefix"]
+        filename_prefix = dataset_prefix(dataset_name)
 
-        file_format = dataset.get(
-            "format",
-            "csv"
-        )
+        file_format = dataset_format(dataset_name)
 
-        ###########################################################
+        #######################################################################
         # Local Write
-        ###########################################################
+        #######################################################################
 
         output_directory = (
-
             OUTPUT_PATH
-
-            / dataset_type
-
+            / layer
             / folder
-
         )
 
         local_file = FileWriter.write(
-
             dataframe=dataframe,
-
-            dataset=filename,
-
+            dataset=filename_prefix,
             output_directory=output_directory,
-
-            file_format=file_format
-
+            file_format=file_format,
         )
 
-        ###########################################################
-        # ADLS Upload
-        ###########################################################
+        logger.info(
+            f"{dataset_name}: wrote "
+            f"{len(dataframe):,} rows "
+            f"to {local_file}"
+        )
 
-        if SETTINGS.get(
-            "upload_to_adls",
-            True
-        ):
+        #######################################################################
+        # Storage Upload
+        #######################################################################
 
-            remote_path = (
-
-                f"{PATHS['landing']}/"
-
-                f"{dataset_type}/"
-
-                f"{folder}/"
-
-                f"{Path(local_file).name}"
-
-            )
+        if SETTINGS.get("upload_to_adls", True):
 
             start = perf_counter()
 
-            self.storage.upload(
-
+            remote_path = self.storage.upload_dataset(
                 local_file,
-
-                remote_path
-
+                layer=layer,
+                dataset=folder,
             )
 
             elapsed = perf_counter() - start
 
             logger.info(
-
-                f"Uploaded "
-
-                f"{len(dataframe)} rows "
-
-                f"to {remote_path} "
-
+                f"{dataset_name}: uploaded "
+                f"{Path(local_file).name} "
+                f"-> {remote_path} "
                 f"in {elapsed:.2f} sec."
-
             )
 
         else:
 
             logger.info(
-
-                "ADLS upload disabled."
-
+                "Upload disabled. Local copy retained."
             )
 
         return local_file
+
+    ###########################################################################
+
+    def publish_multiple(
+        self,
+        datasets: dict[str, pd.DataFrame],
+    ):
+
+        """
+        Publish multiple datasets.
+
+        Example
+
+            {
+                "customers": customer_df,
+                "accounts": account_df
+            }
+        """
+
+        outputs = {}
+
+        for dataset_name, dataframe in datasets.items():
+
+            outputs[dataset_name] = self.publish(
+                dataframe=dataframe,
+                dataset_name=dataset_name,
+            )
+
+        return outputs
